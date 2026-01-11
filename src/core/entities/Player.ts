@@ -12,6 +12,7 @@ export class Player extends GameObject {
   level: number = 1;
   xpToNextLevel: number = 100;
   invulnerableTimer: number = 0;
+  trail: { x: number, y: number, alpha: number }[] = [];
 
   constructor(x: number, y: number) {
     super(x, y, 15, 'white');
@@ -22,6 +23,19 @@ export class Player extends GameObject {
     if (this.invulnerableTimer > 0) {
       this.invulnerableTimer -= deltaTime;
     }
+
+    // Atualiza o rastro (Trail Effect)
+    // Adiciona posição atual a cada frame (ou a cada X ms para performance)
+    this.trail.push({ x: this.position.x, y: this.position.y, alpha: 0.5 });
+    
+    // Remove pontos antigos e reduz alpha
+    for (let i = this.trail.length - 1; i >= 0; i--) {
+        this.trail[i].alpha -= deltaTime * 2; // Fade out rápido
+        if (this.trail[i].alpha <= 0) {
+            this.trail.splice(i, 1);
+        }
+    }
+
     super.update(deltaTime);
   }
 
@@ -32,6 +46,13 @@ export class Player extends GameObject {
     if (this.invulnerableTimer > 0) return;
     this.hp -= amount;
     this.invulnerableTimer = 0.5; // 0.5s de invulnerabilidade pós-dano
+  }
+
+  /**
+   * Cura o jogador.
+   */
+  heal(amount: number) {
+    this.hp = Math.min(this.hp + amount, this.maxHp);
   }
 
   /**
@@ -57,6 +78,15 @@ export class Player extends GameObject {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    // Desenha o rastro
+    this.trail.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, this.radius * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${point.alpha})`;
+        ctx.fill();
+        ctx.closePath();
+    });
+
     // Efeito visual de piscar quando invulnerável
     if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0) {
       return;
