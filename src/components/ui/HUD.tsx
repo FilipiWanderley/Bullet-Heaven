@@ -1,0 +1,56 @@
+import React from 'react';
+
+interface HUDProps {
+  score: number;
+  level: number;
+  xp: number;
+  maxXp: number;
+}
+
+/**
+ * Heads-Up Display (HUD) do jogo.
+ * Exibe informações vitais como Score, Nível e Progresso de XP.
+ */
+export const HUD: React.FC<HUDProps> = ({ score, level, xp, maxXp }) => {
+  // Calcula a porcentagem de XP para a barra de progresso
+  const xpPercentage = Math.min(100, Math.max(0, (xp / maxXp) * 100));
+
+  return (
+    <div className="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between">
+      {/* Top Bar: Level & Score */}
+      <div className="flex justify-between items-start w-full">
+        
+        {/* Level & XP Container */}
+        <div className="flex flex-col gap-2 w-64">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">
+              LVL {level}
+            </span>
+            <span className="text-sm text-cyan-200/70">
+              {xp} / {maxXp} XP
+            </span>
+          </div>
+          
+          {/* XP Bar Background */}
+          <div className="w-full h-3 bg-gray-900/80 border border-cyan-900/50 rounded-sm overflow-hidden">
+            {/* XP Bar Fill */}
+            <div 
+              className="h-full bg-gradient-to-r from-cyan-600 to-purple-600 transition-all duration-300 ease-out"
+              style={{ width: `${xpPercentage}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Score Counter */}
+        <div className="flex flex-col items-end">
+          <span className="text-sm text-purple-300/70 uppercase tracking-widest">
+            Score
+          </span>
+          <span className="text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+            {score.toLocaleString()}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};

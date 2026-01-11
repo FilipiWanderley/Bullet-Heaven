@@ -1,5 +1,9 @@
-import { Vector2 } from './Vector2';
+import { Vector2 } from '../physics/Vector2';
 
+/**
+ * Classe base para todos os objetos do jogo.
+ * Encapsula propriedades físicas comuns como posição, velocidade e renderização básica.
+ */
 export class GameObject {
   position: Vector2;
   velocity: Vector2;
@@ -14,11 +18,18 @@ export class GameObject {
     this.color = color;
   }
 
+  /**
+   * Atualiza o estado físico do objeto.
+   * Aplica a velocidade à posição baseado no tempo delta (frame rate independente).
+   */
   update(deltaTime: number) {
-    // Basic movement logic
     this.position = this.position.add(this.velocity.scale(deltaTime));
   }
 
+  /**
+   * Renderiza o objeto no Canvas.
+   * Pode ser sobrescrito por classes filhas para desenhos mais complexos.
+   */
   draw(ctx: CanvasRenderingContext2D) {
     ctx.beginPath();
     ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);

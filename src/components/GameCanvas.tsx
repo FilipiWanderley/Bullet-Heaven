@@ -1,89 +1,151 @@
-import { useEffect, useRef } from 'react';
-import { GameEngine } from '../game/GameEngine';
-import { Vector2 } from '../game/Vector2';
+import React, { useEffect, useRef, useState } from 'react';
+import { GameEngine } from '../core/GameEngine';
+import { Vector2 } from '../core/physics/Vector2';
+import { useGameLoop } from '../hooks/useGameLoop';
+import { StartScreen } from './ui/StartScreen';
+import { HUD } from './ui/HUD';
+import type { GameState } from '../types';
 
 export const GameCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<GameEngine | null>(null);
-  const requestRef = useRef<number>(0);
-  const previousTimeRef = useRef<number>(0);
+  const [engine, setEngine] = useState<GameEngine | null>(null);
+  
+  // UI State
+  const [gameState, setGameState] = useState<GameState>('start');
+  const [hudState, setHudState] = useState({
+    score: 0,
+    level: 1,
+    xp: 0,
+    maxXp: 100
+  });
+
+  // Refs para inputs (para não depender do ciclo de render do React)
   const keysRef = useRef<{ [key: string]: boolean }>({});
 
+  // Inicialização do Engine
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (canvasRef.current && !engine) {
+      const newEngine = new GameEngine(
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
+      setEngine(newEngine);
+    }
+  }, [canvasRef, engine]);
 
-    // Initialize Engine
-    engineRef.current = new GameEngine(canvas.width, canvas.height);
+  // Input Handlers (Keyboard)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keysRef.current[e.code] = true;
+      if (engine) engine.handleInput(keysRef.current);
+    };
 
-    // Input Listeners (Keyboard)
-    const handleKeyDown = (e: KeyboardEvent) => { keysRef.current[e.code] = true; };
-    const handleKeyUp = (e: KeyboardEvent) => { keysRef.current[e.code] = false; };
-    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysRef.current[e.code] = false;
+      if (engine) engine.handleInput(keysRef.current);
+    };
+
+    const handleResize = () => {
+      if (canvasRef.current && canvasRef.current.parentElement && engine) {
+        const { clientWidth, clientHeight } = canvasRef.current.parentElement;
+        canvasRef.current.width = clientWidth;
+        canvasRef.current.height = clientHeight;
+        engine.resize(clientWidth, clientHeight);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-
-    // Resize Handler
-    const handleResize = () => {
-        if (canvas && canvas.parentElement) {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-            engineRef.current?.resize(canvas.width, canvas.height);
-        }
-    };
     window.addEventListener('resize', handleResize);
-    handleResize(); // Initial resize
-
-    // Game Loop
-    const animate = (time: number) => {
-      if (previousTimeRef.current !== undefined) {
-        const deltaTime = (time - previousTimeRef.current) / 1000;
-        // Cap deltaTime to avoid huge jumps
-        const safeDelta = Math.min(deltaTime, 0.1);
-        
-        const engine = engineRef.current;
-        if (engine) {
-            engine.handleInput(keysRef.current);
-            engine.update(safeDelta);
-            const ctx = canvas.getContext('2d');
-            if (ctx) engine.draw(ctx);
-        }
-      }
-      previousTimeRef.current = time;
-      requestRef.current = requestAnimationFrame(animate);
-    };
-
-    requestRef.current = requestAnimationFrame(animate);
+    
+    // Initial resize
+    handleResize();
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(requestRef.current);
     };
-  }, []);
+  }, [engine]);
 
+  // Input Handler (Mouse - Shooting)
   const handleMouseDown = (e: React.MouseEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas || !engineRef.current) return;
-      
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      engineRef.current.spawnProjectile(new Vector2(x, y));
+    if (!engine || !canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    engine.spawnProjectile(new Vector2(x, y));
+  };
+
+  // Callback chamado a cada frame pelo Game Loop
+  const handleFrame = () => {
+    if (!engine) return;
+
+    // Sincroniza estado do jogo com React se necessário
+    if (engine.gameState !== gameState) {
+      setGameState(engine.gameState);
+    }
+
+    // Atualiza HUD apenas se houver mudanças significativas ou a cada X frames
+    // Como React 18 é otimizado, vamos tentar atualizar se os valores mudarem
+    if (
+      engine.score !== hudState.score ||
+      engine.player.xp !== hudState.xp ||
+      engine.player.level !== hudState.level
+    ) {
+      setHudState({
+        score: engine.score,
+        level: engine.player.level,
+        xp: engine.player.xp,
+        maxXp: engine.player.xpToNextLevel
+      });
+    }
+  };
+
+  // Hook do Game Loop
+  useGameLoop(engine, canvasRef, handleFrame);
+
+  const handleStartGame = () => {
+    if (engine) {
+      engine.startGame();
+      // Força foco na janela para inputs funcionarem
+      window.focus();
+    }
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div className="relative w-full h-screen bg-neutral-900 overflow-hidden select-none">
+      {/* Camada do Canvas (Renderização do Jogo) */}
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
-        style={{ display: 'block' }}
+        className="block w-full h-full cursor-crosshair"
       />
-      <div style={{ position: 'absolute', top: 10, left: 10, color: 'white', pointerEvents: 'none', fontFamily: 'monospace' }}>
-        Use WASD to move. Click to shoot.
-      </div>
+
+      {/* Camada de UI (Sobreposta) */}
+      {gameState === 'start' && (
+        <StartScreen onStart={handleStartGame} />
+      )}
+
+      {gameState === 'gameover' && (
+        <StartScreen 
+          onStart={handleStartGame} 
+          title="GAME OVER" 
+          subtitle={`Score Final: ${hudState.score}`}
+          buttonText="TENTAR NOVAMENTE"
+        />
+      )}
+
+      {gameState === 'playing' && (
+        <HUD 
+          score={hudState.score}
+          level={hudState.level}
+          xp={hudState.xp}
+          maxXp={hudState.maxXp}
+        />
+      )}
     </div>
   );
 };
