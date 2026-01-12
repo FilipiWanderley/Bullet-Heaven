@@ -24,6 +24,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           {subtitle}
         </p>
 
+        <p className="text-xs text-gray-600 font-mono mt-4">v1.1 - Mobile & Performance Update</p>
+
         <button
           onClick={onStart}
           className="group relative px-12 py-5 bg-transparent overflow-hidden rounded-none border-2 border-cyan-500 hover:border-purple-500 transition-all duration-300"
