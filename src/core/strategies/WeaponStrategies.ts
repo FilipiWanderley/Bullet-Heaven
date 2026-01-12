@@ -25,6 +25,9 @@ export class DefaultWeaponStrategy implements WeaponStrategy {
     const worldTarget = target.add(engine.camera);
     const direction = worldTarget.sub(player.position).normalize();
     
+    // Se direção for inválida (zero), define padrão
+    if (isNaN(direction.x) || isNaN(direction.y)) return;
+
     const proj = engine.projectilePool.get(player.position.x, player.position.y, direction);
     engine.activeProjectiles.push(proj);
   }
@@ -36,8 +39,10 @@ export class DefaultWeaponStrategy implements WeaponStrategy {
 export class TripleShotWeaponStrategy implements WeaponStrategy {
   shoot(player: Player, target: Vector2, engine: GameEngine): void {
     const worldTarget = target.add(engine.camera);
-    const baseDir = worldTarget.sub(player.position).normalize();
+    let baseDir = worldTarget.sub(player.position).normalize();
     
+    if (isNaN(baseDir.x) || isNaN(baseDir.y)) baseDir = new Vector2(1, 0);
+
     // Ângulos de dispersão (em radianos)
     const angles = [-0.2, 0, 0.2]; // ~11 graus de spread
 
@@ -50,12 +55,6 @@ export class TripleShotWeaponStrategy implements WeaponStrategy {
       
       const dir = new Vector2(newX, newY);
       
-      // Usa o pool da engine, mas precisamos adaptar o spawnProjectile para aceitar direção direta
-      // Como o método spawnProjectile original calcula a direção baseada no target,
-      // vamos criar um método overload ou usar uma lógica customizada aqui.
-      // Para manter o encapsulamento, o ideal seria o spawnProjectile aceitar uma direção opcional.
-      
-      // WORKAROUND: Vamos chamar o get do pool diretamente aqui para ter controle total
       const proj = engine.projectilePool.get(player.position.x, player.position.y, dir);
       engine.activeProjectiles.push(proj);
     });
@@ -63,18 +62,21 @@ export class TripleShotWeaponStrategy implements WeaponStrategy {
 }
 
 /**
- * Estratégia Escudo Orbital: Dispara projéteis em espiral ao redor do jogador.
- * (Simplificação visual para "Orbital")
+ * Estratégia Escudo Orbital: Dispara projéteis em todas as direções rapidamente.
+ * Cria um efeito de "bullet hell" ao redor do jogador.
  */
 export class OrbitalFireStrategy implements WeaponStrategy {
     private angle: number = 0;
 
     shoot(player: Player, target: Vector2, engine: GameEngine): void {
-        this.angle += 0.5;
-        const offset = new Vector2(Math.cos(this.angle), Math.sin(this.angle));
-        const dir = offset.normalize();
-        
-        const proj = engine.projectilePool.get(player.position.x, player.position.y, dir);
-        engine.activeProjectiles.push(proj);
+        // Dispara 4 projéteis em cruz giratória a cada clique
+        for (let i = 0; i < 4; i++) {
+            this.angle += (Math.PI / 2) + 0.1; // 90 graus + rotação
+            const offset = new Vector2(Math.cos(this.angle), Math.sin(this.angle));
+            const dir = offset.normalize();
+            
+            const proj = engine.projectilePool.get(player.position.x, player.position.y, dir);
+            engine.activeProjectiles.push(proj);
+        }
     }
 }

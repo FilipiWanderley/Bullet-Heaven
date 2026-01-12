@@ -380,8 +380,10 @@ export class GameEngine {
         this.boss.draw(ctx);
     }
     
-    this.activeProjectiles.forEach(p => p.draw(ctx));
+    // Player desenhado ANTES dos projéteis para que os tiros saiam "de cima" dele
     this.player.draw(ctx);
+    
+    this.activeProjectiles.forEach(p => p.draw(ctx));
 
     ctx.restore();
   }
