@@ -20,7 +20,7 @@ export class PowerUp extends GameObject {
     let color = '#ffffff';
     switch (type) {
         case 'health': color = '#00ff00'; break;
-        case 'xp': color = '#00ffff'; break;
+        case 'xp': color = '#FFD700'; break; // Gold for XP
         case 'weapon_triple': color = '#ffaa00'; break;
         case 'weapon_orbital': color = '#aa00ff'; break;
     }

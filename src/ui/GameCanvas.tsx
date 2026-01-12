@@ -5,6 +5,7 @@ import { useGameLoop } from '../hooks/useGameLoop';
 import { StartScreen } from './StartScreen';
 import { TutorialModal } from './TutorialModal';
 import { HUD } from './HUD';
+import { VirtualJoystick } from './VirtualJoystick';
 import type { GameState } from '../types';
 
 export const GameCanvas = () => {
@@ -133,6 +134,13 @@ export const GameCanvas = () => {
     setShowTutorial(true);
   };
 
+  const handleRestartGame = () => {
+    if (engine) {
+      engine.startGame();
+      window.focus();
+    }
+  };
+
   const handleTutorialComplete = () => {
     setShowTutorial(false);
     if (engine) {
@@ -142,14 +150,25 @@ export const GameCanvas = () => {
     }
   };
 
+  const handleJoystickMove = (x: number, y: number) => {
+    if (engine) {
+      engine.setJoystickInput(x, y);
+    }
+  };
+
   return (
-    <div className="relative w-full h-screen bg-neutral-900 overflow-hidden select-none">
+    <div className="relative w-full h-[100dvh] bg-neutral-900 overflow-hidden select-none touch-none">
       {/* Camada do Canvas (Renderização do Jogo) */}
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         className="block w-full h-full cursor-crosshair"
       />
+      
+      {/* Joystick Virtual (Mobile Only - controlado via CSS/Media Query no componente) */}
+      {(gameState === 'playing' || gameState === 'boss_fight') && (
+        <VirtualJoystick onMove={handleJoystickMove} />
+      )}
 
       {/* Camada de UI (Sobreposta) */}
       {gameState === 'start' && !showTutorial && (
@@ -162,7 +181,7 @@ export const GameCanvas = () => {
 
       {gameState === 'gameover' && (
         <StartScreen 
-          onStart={handleStartGame} 
+          onStart={handleRestartGame} 
           subtitle={`Score Final: ${hudState.score} | High Score: ${hudState.highScore}`}
           buttonText="TENTAR NOVAMENTE"
         />

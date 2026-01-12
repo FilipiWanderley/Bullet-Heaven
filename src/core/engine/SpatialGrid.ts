@@ -23,9 +23,9 @@ export class SpatialHashGrid {
   private cellSize: number;
   private grid: Map<string, SpatialObject[]>;
 
-  constructor(width: number, height: number, cellSize: number) {
+  constructor(cellSize: number) {
     this.cellSize = cellSize;
-    // width e height ignorados na implementação infinita, mantidos para compatibilidade de assinatura
+    // width e height removidos pois a implementação agora é infinita (Map)
     this.grid = new Map();
   }
 

@@ -3,6 +3,7 @@ import { Enemy } from '../entities/Enemy';
 import { Boss } from '../entities/Boss';
 import { Particle } from '../entities/Particle';
 import { Projectile } from '../entities/Projectile';
+import { FloatingText } from '../entities/FloatingText';
 import { Vector2 } from './Vector2';
 import type { GameState, InputKeys } from '../../types';
 import { SpatialHashGrid } from './SpatialGrid';
@@ -29,12 +30,18 @@ export class GameEngine {
   // Arrays de entidades ativas (gerenciadas pelo Pool)
   activeParticles: Particle[] = [];
   activeProjectiles: Projectile[] = [];
+  activeTexts: FloatingText[] = [];
 
   // Object Pools
   particlePool: ObjectPool<Particle>;
   projectilePool: ObjectPool<Projectile>;
+  enemyPool: ObjectPool<Enemy>;
+  textPool: ObjectPool<FloatingText>;
 
+  // Input State
   keys: InputKeys = {};
+  joystickInput: Vector2 = new Vector2(0, 0);
+  mousePosition: Vector2 = new Vector2(0, 0);
   canvasWidth: number;
   canvasHeight: number;
   spawnTimer: number = 0;
@@ -60,12 +67,16 @@ export class GameEngine {
     this.player = new Player(width / 2, height / 2);
     
     // Inicializa a grade com células de 100px
-    this.grid = new SpatialHashGrid(width, height, 100);
+    this.grid = new SpatialHashGrid(100);
 
     // Inicializa Pools
     // Pré-aloca objetos para evitar lag spikes durante o jogo
     this.particlePool = new ObjectPool<Particle>(() => new Particle(), 100);
     this.projectilePool = new ObjectPool<Projectile>(() => new Projectile(), 50);
+    // Enemy pool - aloca 50 inicialmente
+    this.enemyPool = new ObjectPool<Enemy>(() => new Enemy(0, 0), 50);
+    // Text pool - aloca 20
+    this.textPool = new ObjectPool<FloatingText>(() => new FloatingText(), 20);
 
     this.loadHighScore();
   }
@@ -108,7 +119,15 @@ export class GameEngine {
    */
   reset() {
     this.player = new Player(this.canvasWidth / 2, this.canvasHeight / 2);
+    
+    // Release all enemies back to pool
+    this.enemies.forEach(e => this.enemyPool.release(e));
     this.enemies = [];
+
+    // Release all texts
+    this.activeTexts.forEach(t => this.textPool.release(t));
+    this.activeTexts = [];
+
     this.boss = null;
     this.playTime = 0;
     
@@ -131,7 +150,7 @@ export class GameEngine {
   resize(width: number, height: number) {
     this.canvasWidth = width;
     this.canvasHeight = height;
-    this.grid = new SpatialHashGrid(width, height, 100);
+    this.grid = new SpatialHashGrid(100);
   }
 
   /**
@@ -165,6 +184,11 @@ export class GameEngine {
    * Loop principal de atualização lógica (Physics Update).
    * @param deltaTime Tempo decorrido desde o último frame (em segundos).
    */
+  setJoystickInput(x: number, y: number) {
+    this.joystickInput.x = x;
+    this.joystickInput.y = y;
+  }
+
   update(deltaTime: number) {
     if (this.gameState !== 'playing' && this.gameState !== 'boss_fight') return;
 
@@ -191,6 +215,12 @@ export class GameEngine {
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) inputDir.x -= 1;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) inputDir.x += 1;
     
+    // Combine Keyboard + Joystick
+    if (this.joystickInput.x !== 0 || this.joystickInput.y !== 0) {
+        inputDir.x = this.joystickInput.x;
+        inputDir.y = this.joystickInput.y;
+    }
+
     this.player.velocity = inputDir.normalize().scale(this.player.speed);
     this.player.update(deltaTime);
     
@@ -237,7 +267,21 @@ export class GameEngine {
 
     this.enemies = this.enemies.filter(e => {
       e.update(deltaTime, this.player);
-      return !e.isDead;
+      if (e.isDead) {
+        this.enemyPool.release(e);
+        return false;
+      }
+      return true;
+    });
+
+    // Update Floating Texts
+    this.activeTexts = this.activeTexts.filter(t => {
+      t.update(deltaTime);
+      if (t.isDead) {
+        this.textPool.release(t);
+        return false;
+      }
+      return true;
     });
     
     // PowerUps update
@@ -261,7 +305,8 @@ export class GameEngine {
     const x = this.player.position.x + Math.cos(angle) * distance;
     const y = this.player.position.y + Math.sin(angle) * distance;
     
-    const enemy = new Enemy(x, y);
+    // Use Pool instead of new
+    const enemy = this.enemyPool.get(x, y);
     // Aumenta dificuldade com o tempo
     enemy.speed += this.player.level * 5;
     this.enemies.push(enemy);
@@ -283,6 +328,11 @@ export class GameEngine {
         const dist = Vector2.distance(proj.position, enemy.position);
         if (dist < enemy.radius + proj.radius) {
           enemy.takeDamage(10);
+          
+          // Spawn Floating Text
+          const text = this.textPool.get(enemy.position.x, enemy.position.y - 20, "10", "#fff");
+          this.activeTexts.push(text);
+
           proj.isDead = true;
           
           this.spawnParticles(enemy.position, 5, enemy.color);
@@ -326,6 +376,10 @@ export class GameEngine {
     if (enemy instanceof Boss) {
         // Boss Defeated!
         this.score += 5000;
+        
+        const text = this.textPool.get(enemy.position.x, enemy.position.y - 50, "BOSS DEFEATED!", "#FFD700");
+        this.activeTexts.push(text);
+
         this.screenShake = 50; // HUGE SHAKE
         this.spawnParticles(enemy.position, 100, '#ff0055');
         this.boss = null;
@@ -343,6 +397,9 @@ export class GameEngine {
             if (pu) this.powerUps.push(pu);
         }
     }
+    
+    // Devolve ao pool - REMOVIDO DAQUI, feito no loop principal
+    // this.enemyPool.release(enemy);
     
     AudioManager.getInstance().playExplosion();
   }
@@ -375,6 +432,7 @@ export class GameEngine {
     this.powerUps.forEach(p => p.draw(ctx));
     this.activeParticles.forEach(p => p.draw(ctx));
     this.enemies.forEach(e => e.draw(ctx));
+    this.activeTexts.forEach(t => t.draw(ctx));
     
     if (this.boss && !this.boss.isDead) {
         this.boss.draw(ctx);

@@ -10,6 +10,7 @@ export class GameObject {
   radius: number;
   color: string;
   isDead: boolean = false;
+  active: boolean = false; // Required for ObjectPool
 
   constructor(x: number, y: number, radius: number, color: string) {
     this.position = new Vector2(x, y);

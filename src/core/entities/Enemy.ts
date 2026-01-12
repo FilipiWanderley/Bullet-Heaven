@@ -10,6 +10,8 @@ export class Enemy extends GameObject {
   hp: number = 2;
   maxHp: number = 2;
   flashTimer: number = 0;
+  damageText: string = '';
+  damageTextTimer: number = 0;
 
   constructor(x: number, y: number) {
     // Inicializa com cor padrão, mas logo sobrescreve
@@ -18,8 +20,29 @@ export class Enemy extends GameObject {
     // Velocidade variável para evitar que todos os inimigos se movam em uníssono
     this.speed = 100 + Math.random() * 50;
     
-    // Cores Cyberpunk/Neon aleatórias
-    const colors = ['#00ffff', '#ff00ff', '#00ff00', '#ffff00'];
+    // Cores Cyberpunk/Neon "Hostis" (Vermelhos, Roxos, Magentas)
+    // Removido Cyan e Verde para não confundir com XP e Player
+    const colors = ['#ff0055', '#ff0000', '#aa00ff', '#ff00ff', '#ff3300'];
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  /**
+   * Reseta o estado do inimigo para reuso (Object Pooling).
+   */
+  reset(x: number, y: number) {
+    this.position.x = x;
+    this.position.y = y;
+    this.velocity.x = 0;
+    this.velocity.y = 0;
+    this.hp = this.maxHp; 
+    this.isDead = false;
+    this.flashTimer = 0;
+    this.damageText = '';
+    this.damageTextTimer = 0;
+    this.speed = 100 + Math.random() * 50; // Reset speed base
+    
+    // Recalcula cor aleatória
+    const colors = ['#ff0055', '#ff0000', '#aa00ff', '#ff00ff', '#ff3300'];
     this.color = colors[Math.floor(Math.random() * colors.length)];
   }
 
@@ -27,6 +50,10 @@ export class Enemy extends GameObject {
     // Gerencia o efeito de flash branco
     if (this.flashTimer > 0) {
       this.flashTimer -= deltaTime;
+    }
+
+    if (this.damageTextTimer > 0) {
+        this.damageTextTimer -= deltaTime;
     }
 
     // Lógica de perseguição (Pathfinding simples direto ao alvo)
@@ -42,7 +69,9 @@ export class Enemy extends GameObject {
    */
   takeDamage(damage: number) {
     this.hp -= damage;
-    this.flashTimer = 0.1; // Flash branco por 100ms
+    this.flashTimer = 0.2; // Flash branco por 200ms
+    this.damageText = damage.toString();
+    this.damageTextTimer = 0.5;
     if (this.hp <= 0) {
       this.isDead = true;
     }
@@ -66,5 +95,24 @@ export class Enemy extends GameObject {
     ctx.fill();
     ctx.closePath();
     ctx.shadowBlur = 0; // Limpa o efeito para não afetar outros desenhos
+
+    if (this.damageTextTimer > 0) {
+        this.drawDamageText(ctx);
+    }
+  }
+
+  private drawDamageText(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = 'black';
+    
+    // Animação de subida
+    const offset = (0.5 - this.damageTextTimer) * 20;
+    ctx.fillText(this.damageText, this.position.x, this.position.y - 20 - offset);
+    ctx.restore();
   }
 }
