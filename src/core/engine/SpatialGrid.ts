@@ -21,32 +21,23 @@ export interface SpatialObject {
  */
 export class SpatialHashGrid {
   private cellSize: number;
-  private cols: number;
-  private rows: number;
-  private grid: SpatialObject[][][];
+  private grid: Map<string, SpatialObject[]>;
 
   constructor(width: number, height: number, cellSize: number) {
     this.cellSize = cellSize;
-    this.cols = Math.ceil(width / cellSize);
-    this.rows = Math.ceil(height / cellSize);
-    
-    // Inicializa a grade
-    this.grid = [];
-    this.clear();
+    // width e height ignorados na implementação infinita, mantidos para compatibilidade de assinatura
+    this.grid = new Map();
   }
 
   /**
    * Limpa a grade para reconstrução a cada frame.
-   * Em jogos dinâmicos, reconstruir é mais eficiente que mover objetos entre células.
    */
   clear() {
-    this.grid = [];
-    for (let x = 0; x < this.cols; x++) {
-      this.grid[x] = [];
-      for (let y = 0; y < this.rows; y++) {
-        this.grid[x][y] = [];
-      }
-    }
+    this.grid.clear();
+  }
+
+  private getKey(x: number, y: number): string {
+    return `${x},${y}`;
   }
 
   /**
@@ -56,10 +47,12 @@ export class SpatialHashGrid {
   insert(obj: SpatialObject) {
     const cellX = Math.floor(obj.position.x / this.cellSize);
     const cellY = Math.floor(obj.position.y / this.cellSize);
+    const key = this.getKey(cellX, cellY);
 
-    if (cellX >= 0 && cellX < this.cols && cellY >= 0 && cellY < this.rows) {
-      this.grid[cellX][cellY].push(obj);
+    if (!this.grid.has(key)) {
+      this.grid.set(key, []);
     }
+    this.grid.get(key)!.push(obj);
   }
 
   /**
@@ -72,14 +65,13 @@ export class SpatialHashGrid {
     const cellY = Math.floor(obj.position.y / this.cellSize);
     const candidates: SpatialObject[] = [];
 
-    // Verifica 3x3 vizinhos para lidar com objetos na borda das células
+    // Verifica 3x3 vizinhos
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
-        const checkX = cellX + i;
-        const checkY = cellY + j;
-
-        if (checkX >= 0 && checkX < this.cols && checkY >= 0 && checkY < this.rows) {
-          const cellObjects = this.grid[checkX][checkY];
+        const key = this.getKey(cellX + i, cellY + j);
+        const cellObjects = this.grid.get(key);
+        
+        if (cellObjects) {
           for (let k = 0; k < cellObjects.length; k++) {
             candidates.push(cellObjects[k]);
           }
