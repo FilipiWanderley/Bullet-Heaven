@@ -3,6 +3,7 @@ import { GameEngine } from '../core/engine/GameEngine';
 import { Vector2 } from '../core/engine/Vector2';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { StartScreen } from './StartScreen';
+import { TutorialModal } from './TutorialModal';
 import { HUD } from './HUD';
 import type { GameState } from '../types';
 
@@ -12,6 +13,7 @@ export const GameCanvas = () => {
   
   // UI State
   const [gameState, setGameState] = useState<GameState>('start');
+  const [showTutorial, setShowTutorial] = useState(false);
   const [hudState, setHudState] = useState({
     score: 0,
     highScore: 0,
@@ -127,6 +129,12 @@ export const GameCanvas = () => {
   useGameLoop(engine, canvasRef, handleFrame);
 
   const handleStartGame = () => {
+    // Abre o tutorial em vez de iniciar o jogo diretamente
+    setShowTutorial(true);
+  };
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
     if (engine) {
       engine.startGame();
       // Força foco na janela para inputs funcionarem
@@ -144,8 +152,12 @@ export const GameCanvas = () => {
       />
 
       {/* Camada de UI (Sobreposta) */}
-      {gameState === 'start' && (
+      {gameState === 'start' && !showTutorial && (
         <StartScreen onStart={handleStartGame} />
+      )}
+
+      {showTutorial && (
+        <TutorialModal onConfirm={handleTutorialComplete} />
       )}
 
       {gameState === 'gameover' && (
