@@ -13,13 +13,10 @@ interface HUDProps {
     maxHp: number;
     name: string;
   } | null;
+  debugInfo?: string;
 }
 
-/**
- * Heads-Up Display (HUD) do jogo.
- * Exibe informações vitais como Score, High Score, Nível, XP, Vida e Boss Health.
- */
-export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp, maxHp, boss }) => {
+export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp, maxHp, boss, debugInfo }) => {
   // Calcula a porcentagem de XP para a barra de progresso
   const xpPercentage = Math.min(100, Math.max(0, (xp / maxXp) * 100));
   // Calcula a porcentagem de HP
@@ -106,6 +103,13 @@ export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp
           </div>
         </div>
       </div>
+
+      {/* Debug Info */}
+      {debugInfo && (
+        <div className="absolute bottom-4 left-4 text-xs font-mono text-green-500 bg-black/50 p-2 rounded pointer-events-auto select-text">
+            <pre>{debugInfo}</pre>
+        </div>
+      )}
     </div>
   );
 };

@@ -20,11 +20,13 @@ export const GameCanvas = () => {
     maxXp: 100,
     hp: 100,
     maxHp: 100,
-    boss: null as { hp: number; maxHp: number; name: string; } | null
+    boss: null as { hp: number; maxHp: number; name: string; } | null,
+    debugInfo: ''
   });
 
   // Refs para inputs (para não depender do ciclo de render do React)
   const keysRef = useRef<{ [key: string]: boolean }>({});
+  const lastMousePos = useRef<{ x: number, y: number } | null>(null);
 
   // Inicialização do Engine
   useEffect(() => {
@@ -80,6 +82,7 @@ export const GameCanvas = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    lastMousePos.current = { x, y };
     engine.spawnProjectile(new Vector2(x, y));
   };
 
@@ -114,7 +117,8 @@ export const GameCanvas = () => {
             hp: engine.boss.hp, 
             maxHp: engine.boss.maxHp, 
             name: 'CYBER LORD' 
-        } : null
+        } : null,
+        debugInfo: `Enemies: ${engine.enemies.length} | Proj: ${engine.activeProjectiles.length} | State: ${engine.gameState}`
       });
     }
   };
@@ -163,6 +167,7 @@ export const GameCanvas = () => {
           hp={hudState.hp}
           maxHp={hudState.maxHp}
           boss={hudState.boss}
+          debugInfo={hudState.debugInfo}
         />
       )}
     </div>
