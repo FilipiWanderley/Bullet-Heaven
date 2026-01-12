@@ -70,10 +70,29 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ onMove }) => {
     };
   }, [active, origin, onMove]);
 
+  // Detecta se é dispositivo touch para mostrar o joystick
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    const checkTouch = () => {
+      // Verifica media query para pointer coarse (touch)
+      const isTouch = window.matchMedia('(pointer: coarse)').matches || 
+                     'ontouchstart' in window || 
+                     navigator.maxTouchPoints > 0;
+      setIsTouchDevice(isTouch);
+    };
+
+    checkTouch();
+    window.addEventListener('resize', checkTouch);
+    return () => window.removeEventListener('resize', checkTouch);
+  }, []);
+
+  if (!isTouchDevice) return null;
+
   return (
     <div 
       ref={containerRef}
-      className="absolute bottom-8 left-8 w-32 h-32 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm touch-none flex items-center justify-center z-50 md:hidden"
+      className="absolute bottom-8 left-8 w-32 h-32 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm touch-none flex items-center justify-center z-50"
     >
       {/* Base */}
       <div className="w-2 h-2 rounded-full bg-white/30 absolute" />

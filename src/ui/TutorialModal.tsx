@@ -14,7 +14,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onConfirm }) => {
             INSTRUÇÕES DE MISSÃO
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
             {/* Movimento */}
             <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-cyan-500/50 transition-colors">
               <div className="text-5xl mb-2">🕹️</div>
