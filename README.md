@@ -31,6 +31,22 @@ Para permitir uma jogabilidade dinâmica e extensível, o sistema de combate uti
 
 Isso facilita a adição de novas armas (ex: Lasers, Mísseis) apenas criando novas classes que implementam a interface, respeitando o princípio **Open/Closed (OCP)** do SOLID.
 
+```mermaid
+classDiagram
+    class WeaponStrategy {
+      <<interface>>
+      +shoot(position, direction)
+    }
+    class DefaultWeaponStrategy {
+      +shoot()
+    }
+    class TripleShotWeaponStrategy {
+      +shoot()
+    }
+    WeaponStrategy <|.. DefaultWeaponStrategy
+    WeaponStrategy <|.. TripleShotWeaponStrategy
+```
+
 ### 2. State Machine (Fluxo de Jogo)
 O gerenciamento dos estados do jogo (Menu, Jogando, Boss, Game Over) é controlado por uma **Máquina de Estados Finitos**.
 - **Estados**: `start` -> `playing` -> `boss_fight` -> `gameover`.
