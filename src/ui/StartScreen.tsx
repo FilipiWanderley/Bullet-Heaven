@@ -19,10 +19,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 }) => {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-50">
-      <div className="text-center space-y-8 animate-fade-in">
-        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-          {title}
-        </h1>
+      <div className="text-center space-y-8 animate-fade-in flex flex-col items-center">
+        <img src="/logo.svg" alt="Neon Survivor Logo" className="w-[600px] max-w-full h-auto drop-shadow-[0_0_30px_rgba(0,255,255,0.3)]" />
         
         <p className="text-xl text-gray-300 tracking-widest uppercase">
           {subtitle}

@@ -1,5 +1,9 @@
 # 🎮 Neon Survivor - Expert Grade Game Engine
 
+<p align="center">
+  <img src="public/logo.svg" alt="Neon Survivor Logo" width="600">
+</p>
+
 > **Projeto 100% desenvolvido no VS Code**, transformado em uma demonstração técnica de nível sênior. Este repositório ilustra como aplicar padrões de projeto avançados (Engine Architecture, Spatial Partitioning) e otimizações algorítmicas em um motor de jogo TypeScript.
 
 ---
