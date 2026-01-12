@@ -16,7 +16,7 @@
   </defs>
 
   <!-- ICON SECTION (Left) -->
-  <g transform="translate(80, 75)">
+  <g transform="translate(190, 75)">
     <!-- Hexagon Shape -->
     <path d="M -40,-20 L -40,20 L 0,45 L 40,20 L 40,-20 L 0,-45 Z" 
           fill="none" 
