@@ -1,6 +1,5 @@
 import { GameObject } from './GameObject';
 import { Player } from './Player';
-import { GameEngine } from '../engine/GameEngine';
 import { TripleShotWeaponStrategy, OrbitalFireStrategy, DefaultWeaponStrategy } from '../strategies/WeaponStrategies';
 
 export type PowerUpType = 'health' | 'xp' | 'weapon_triple' | 'weapon_orbital';

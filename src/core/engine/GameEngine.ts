@@ -316,7 +316,7 @@ export class GameEngine {
         const dist = Vector2.distance(this.player.position, p.position);
         if (dist < this.player.radius + p.radius) {
             p.collected = true;
-            p.effect(this.player, this);
+            p.effect(this.player);
             AudioManager.getInstance().playPowerUp();
         }
     });
