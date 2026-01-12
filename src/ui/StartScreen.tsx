@@ -16,11 +16,11 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   buttonText = "INICIAR MISSÃO"
 }) => {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-50">
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-50 touch-auto">
       <div className="text-center space-y-8 animate-fade-in flex flex-col items-center">
-        <img src="/logo.svg" alt="Neon Survivor Logo" className="w-[600px] max-w-full h-auto drop-shadow-[0_0_30px_rgba(0,255,255,0.3)]" />
+        <img src="/logo.svg" alt="Neon Survivor Logo" className="w-[80%] md:w-[600px] max-w-full h-auto drop-shadow-[0_0_30px_rgba(0,255,255,0.3)]" />
         
-        <p className="text-xl text-gray-300 tracking-widest uppercase font-light">
+        <p className="text-lg md:text-xl text-gray-300 tracking-widest uppercase font-light">
           {subtitle}
         </p>
 
@@ -28,7 +28,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
         <button
           onClick={onStart}
-          className="group relative px-12 py-5 bg-transparent overflow-hidden rounded-none border-2 border-cyan-500 hover:border-purple-500 transition-all duration-300"
+          className="group relative px-8 py-4 md:px-12 md:py-5 bg-transparent overflow-hidden rounded-none border-2 border-cyan-500 hover:border-purple-500 transition-all duration-300"
         >
           <div className="absolute inset-0 w-0 bg-cyan-500/20 transition-all duration-[250ms] ease-out group-hover:w-full"></div>
           <span className="relative text-2xl font-bold tracking-[0.2em] text-cyan-400 group-hover:text-purple-300 transition-colors drop-shadow-[0_0_10px_rgba(0,255,255,0.5)]">

@@ -89,6 +89,18 @@ export const GameCanvas = () => {
     engine.spawnProjectile(new Vector2(x, y));
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!engine || !canvasRef.current) return;
+    
+    const touch = e.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    lastMousePos.current = { x, y };
+    engine.spawnProjectile(new Vector2(x, y));
+  };
+
   // Callback chamado a cada frame pelo Game Loop
   const handleFrame = () => {
     if (!engine) return;
@@ -161,8 +173,18 @@ export const GameCanvas = () => {
       {/* Camada do Canvas (Renderização do Jogo) */}
       <canvas
         ref={canvasRef}
+        className="block w-full h-full cursor-crosshair touch-none"
         onMouseDown={handleMouseDown}
-        className="block w-full h-full cursor-crosshair"
+        onTouchStart={handleTouchStart}
+        onMouseMove={(e) => {
+          if (canvasRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            engine?.setMousePosition(
+              e.clientX - rect.left,
+              e.clientY - rect.top
+            );
+          }
+        }}
       />
       
       {/* Joystick Virtual (Mobile Only - controlado via CSS/Media Query no componente) */}

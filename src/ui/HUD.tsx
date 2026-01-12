@@ -97,7 +97,7 @@ export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp
             <span className="text-sm text-purple-300/70 uppercase tracking-widest">
               Score
             </span>
-            <span className="text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+            <span className="text-2xl md:text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
               {score.toLocaleString()}
             </span>
           </div>

@@ -189,6 +189,11 @@ export class GameEngine {
     this.joystickInput.y = y;
   }
 
+  setMousePosition(x: number, y: number) {
+    this.mousePosition.x = x;
+    this.mousePosition.y = y;
+  }
+
   update(deltaTime: number) {
     if (this.gameState !== 'playing' && this.gameState !== 'boss_fight') return;
 
