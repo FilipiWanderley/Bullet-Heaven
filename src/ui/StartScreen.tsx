@@ -23,7 +23,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       <div 
         className="absolute inset-0 bg-cover bg-center z-0 scale-105 animate-pulse-slow"
         style={{ 
-            backgroundImage: 'url("https://images.unsplash.com/photo-1577113398331-d843d3341a63?q=80&w=2874&auto=format&fit=crop")',
+            backgroundImage: 'url("/background.png")',
             filter: 'brightness(0.6) blur(2px)'
         }}
       />
