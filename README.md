@@ -81,7 +81,7 @@ Este projeto foi otimizado para o VS Code. Siga os passos abaixo:
 ## 🔗 Links
 
 - **GitHub Repository**: [Acesse o Código Fonte](https://github.com/FilipiWanderley/Bullet-Heaven)
-- **Vercel Deployment**: [Jogue Agora]([https://neon-survivor.vercel.app](https://bullet-heaven-zeta.vercel.app/))
+- **Vercel Deployment**: [Jogue Agora](https://bullet-heaven-zeta.vercel.app/)
 
 ---
 *Desenvolvido com paixão e rigor técnico por Filipi Moraes.*
