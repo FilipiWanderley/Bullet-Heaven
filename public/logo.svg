@@ -1,27 +1,63 @@
-<svg width="600" height="200" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+<svg width="600" height="150" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+    <!-- Filtro de Glow -->
+    <filter id="icon-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ff00ff;stop-opacity:1" />
+
+    <linearGradient id="main-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f3ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bc13fe;stop-opacity:1" />
     </linearGradient>
   </defs>
-  
-  <!-- Background Elements -->
-  <path d="M 50 100 L 550 100" stroke="#1a1a1a" stroke-width="2" />
-  <circle cx="300" cy="100" r="85" stroke="url(#grad1)" stroke-width="2" fill="none" opacity="0.3" />
-  <path d="M 300 15 L 300 185" stroke="url(#grad1)" stroke-width="1" opacity="0.2" />
-  
-  <!-- Main Text -->
-  <text x="50%" y="95" font-family="Arial, sans-serif" font-weight="900" font-size="70" text-anchor="middle" fill="none" stroke="#00ffff" stroke-width="2" filter="url(#neon-glow)" letter-spacing="8">NEON</text>
-  <text x="50%" y="155" font-family="Arial, sans-serif" font-weight="900" font-size="42" text-anchor="middle" fill="#ff00ff" stroke="none" filter="url(#neon-glow)" letter-spacing="12">SURVIVOR</text>
-  
-  <!-- Decorative Accents -->
-  <rect x="220" y="105" width="160" height="2" fill="#00ffff" opacity="0.5" />
+
+  <!-- ICON SECTION (Left) -->
+  <g transform="translate(80, 75)">
+    <!-- Hexagon Shape -->
+    <path d="M -40,-20 L -40,20 L 0,45 L 40,20 L 40,-20 L 0,-45 Z" 
+          fill="none" 
+          stroke="url(#main-grad)" 
+          stroke-width="4"
+          filter="url(#icon-glow)" />
+    
+    <!-- Inner Pulse -->
+    <circle cx="0" cy="0" r="15" fill="#00f3ff" opacity="0.8">
+      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite" />
+      <animate attributeName="r" values="15;20;15" dur="2s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Tech Lines -->
+    <line x1="-50" y1="0" x2="-65" y2="0" stroke="#bc13fe" stroke-width="2" />
+    <line x1="50" y1="0" x2="65" y2="0" stroke="#bc13fe" stroke-width="2" />
+  </g>
+
+  <!-- TEXT SECTION (Right) -->
+  <g transform="translate(160, 0)">
+    <!-- NEON -->
+    <text x="0" y="80" 
+          font-family="Verdana, sans-serif" 
+          font-weight="900" 
+          font-size="60" 
+          fill="#fff" 
+          stroke="url(#main-grad)" 
+          stroke-width="1"
+          filter="url(#icon-glow)"
+          letter-spacing="2">
+      NEON
+    </text>
+    
+    <!-- SURVIVOR -->
+    <text x="5" y="115" 
+          font-family="Courier New, monospace" 
+          font-weight="bold" 
+          font-size="24" 
+          fill="#bc13fe" 
+          letter-spacing="8">
+      SURVIVOR
+    </text>
+  </g>
 </svg>
