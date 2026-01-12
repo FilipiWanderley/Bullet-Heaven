@@ -85,3 +85,5 @@ Este projeto foi otimizado para o VS Code. Siga os passos abaixo:
 
 ---
 *Desenvolvido com paixão e rigor técnico por Filipi Moraes.*
+
+<!-- v1.1 Update -->
