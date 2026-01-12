@@ -1,77 +1,76 @@
-# 🎮 Neon Survivor - Expert Grade Game Engine
+# Neon Survivor 🕹️
 
-<p align="center">
-  <img src="public/logo.svg" alt="Neon Survivor Logo" width="600">
-</p>
+> Um Roguelike de sobrevivência espacial de alto desempenho construído do zero com TypeScript e Canvas API.
 
-> **Projeto 100% desenvolvido no VS Code**, transformado em uma demonstração técnica de nível sênior. Este repositório ilustra como aplicar padrões de projeto avançados (Engine Architecture, Spatial Partitioning) e otimizações algorítmicas em um motor de jogo TypeScript.
+## 🚀 Sobre o Projeto
 
----
+Neon Survivor é um jogo de ação frenética onde você controla uma nave em um espaço infinito, combatendo hordas de inimigos e enfrentando chefes poderosos. O projeto foi desenvolvido com foco em **Performance**, **Arquitetura de Software** e **Clean Code**.
 
-## 🏗️ Arquitetura de Engine (ECS-lite)
+### 🛠️ Stack Tecnológica
 
-Refatoramos o núcleo do jogo para seguir princípios de motores profissionais em C++:
-
-- **Separação de Sistemas**: A lógica de *Physics Update* (movimento, colisão) é completamente desacoplada do *Render Loop*. Isso permite simular a física em passos fixos (se desejado) e interpolar a renderização, além de facilitar testes unitários da lógica sem dependência do Canvas.
-- **Componentização**: Embora mantenhamos herança para simplicidade, as responsabilidades são divididas em "Sistemas": `PhysicsSystem`, `CollisionSystem`, `RenderSystem`.
-
----
-
-## ⚡ Análise de Complexidade Algorítmica
-
-Um dos maiores desafios em engines 2D é a detecção de colisão eficiente.
-
-### Colisão Ingênua: $O(N^2)$
-A abordagem inicial compara cada entidade com todas as outras.
-- Para 1000 entidades: $1000 \times 1000 = 1.000.000$ verificações por frame.
-- **Resultado**: Inviável para jogos em tempo real (FPS < 10).
-
-### Spatial Hash Grid: $O(N)$
-Implementamos uma Grade de Particionamento Espacial (`SpatialHashGrid`). O mapa é dividido em células (buckets).
-1.  **Fase de Hash**: Cada entidade é atribuída a uma célula baseada em sua posição ($O(1)$).
-2.  **Fase de Broad-Phase**: Para checar colisão, consultamos apenas as entidades na mesma célula e vizinhas (máximo 9 células).
-3.  **Complexidade Média**: O número de verificações por entidade torna-se constante $k$ (densidade local), resultando em complexidade total linear $O(N \times k) \approx O(N)$.
-- **Resultado**: 1000+ entidades a 60 FPS estáveis.
+- **Frontend**: React 18
+- **Linguagem**: TypeScript (Strict Mode)
+- **Renderização**: HTML5 Canvas API (High Performance)
+- **Estilização**: TailwindCSS
+- **Bundler**: Vite
 
 ---
 
-## 💾 Gestão de Ciclo de Vida de Memória
+## 🧠 Arquitetura e Design Patterns
 
-Em ambientes Garbage Collected (JS/V8), alocações frequentes são o inimigo da fluidez.
+Este projeto demonstra o uso prático de padrões de projeto avançados para resolver problemas reais de desenvolvimento de jogos.
 
-### Object Pooling (Zero-Alloc Loop)
-Implementamos pools para `Projectiles` e `Particles`.
-- **Problema**: `new Projectile()` cria lixo de memória a cada tiro. O GC pausa o jogo para limpar (Stop-the-world).
-- **Solução**: Pré-alocamos arrays de objetos inativos.
-    - `pool.get()`: Reutiliza uma instância existente, resetando seu estado.
-    - `pool.release()`: Marca como inativo para uso futuro.
-- **Impacto**: O heap de memória permanece estável durante tiroteios intensos.
+### 1. Game Loop Pattern 🔄
+O coração do jogo. Separamos a lógica de **Update** (Física, IA, Regras) da lógica de **Draw** (Renderização).
+- **Update**: Roda em delta-time fixo ou variável para garantir movimento suave independente da taxa de quadros.
+- **Draw**: Renderiza o estado atual o mais rápido possível (requestAnimationFrame).
 
-### Swap-Remove
-Removemos entidades de arrays usando a técnica *Swap & Pop*.
-- **Padrão JS (`splice`)**: $O(N)$ - Desloca todos os elementos subsequentes.
-- **Otimização**: $O(1)$ - Trocamos o elemento a remover pelo último do array e fazemos `pop()`. A ordem não importa para renderização, mas a performance é crítica.
+### 2. Strategy Pattern (Sistema de Armas) 🔫
+Para permitir que o jogador troque de armas dinamicamente sem encher o código do Player de `if/else`, utilizamos o padrão Strategy.
+- **Interface**: `WeaponStrategy` define o contrato `shoot()`.
+- **Concretas**: `DefaultWeaponStrategy`, `TripleShotWeaponStrategy`, `OrbitalFireStrategy`.
+- **Benefício**: Adicionar uma nova arma é tão simples quanto criar uma nova classe, sem tocar na classe `Player`.
 
----
+### 3. State Machine (Fluxo de Jogo) 🚦
+O jogo transita entre estados bem definidos para controlar o fluxo e a UI.
+- **Estados**: `START` -> `PLAYING` -> `BOSS_FIGHT` -> `GAMEOVER`.
+- **Benefício**: Impede comportamentos indesejados (ex: inimigos spawnando na tela de menu) e facilita o gerenciamento da UI.
 
-## 🎨 Visual "Juice" (Polimento Sênior)
+### 4. Object Pooling (Gerenciamento de Memória) ♻️
+Criar e destruir objetos (como balas e partículas) milhares de vezes por segundo causa travamentos devido ao Garbage Collector.
+- **Solução**: Pré-alocamos um "pool" de objetos inativos. Quando precisamos de um, pegamos do pool. Quando ele "morre", devolvemos ao pool em vez de destruir.
+- **Resultado**: Zero alocações de memória durante o gameplay intenso = 60 FPS cravados.
 
-Técnicas visuais para aumentar o impacto do gameplay:
-
-*   **Bloom & Glow**: Uso estratégico de `shadowBlur` no Canvas Context para simular emissão de luz em projéteis neon e explosões.
-*   **Hit-Stop**: O Engine congela propositalmente a lógica por ~100ms ao impactar inimigos, vendendo a "força" do impacto (inspirado em jogos de luta).
-*   **Motion Trails**: O Player deixa um rastro de pós-imagem, calculado via buffer circular de posições passadas com fade-out de alpha.
-*   **Camera Shake**: Algoritmo de tremor com decaimento exponencial para feedback de dano.
-
----
-
-## 🛠️ Stack Tecnológica
-
-*   **Core**: TypeScript (Strict Mode), HTML5 Canvas API.
-*   **Math**: Álgebra Vetorial Customizada (`Vector2`).
-*   **UI**: React 18 (apenas HUD/Menus), Tailwind CSS.
-*   **Tooling**: Vite, VS Code.
+### 5. Spatial Hash Grid (Otimização de Colisão) 🗺️
+Checar colisão de "todos contra todos" tem complexidade O(N²), o que mata a performance com muitos inimigos.
+- **Solução**: Dividimos o mundo em uma grade. Só checamos colisão entre objetos que estão na mesma célula da grade.
+- **Resultado**: Complexidade próxima de O(N), permitindo centenas de inimigos na tela.
 
 ---
 
-*Código limpo, arquitetura escalável e performance em primeiro lugar.*
+## 🎮 Como Jogar
+
+1. **Movimento**: W, A, S, D ou Setas.
+2. **Tiro**: Mouse (Clique para atirar na direção do cursor).
+3. **Objetivo**: Sobreviva o máximo de tempo possível e derrote o **CYBER LORD**.
+
+### Dicas
+- Colete **XP (Azul)** para subir de nível e curar sua nave.
+- O Boss aparece após **60 segundos** de sobrevivência.
+- Fique atento à sua barra de vida no topo da tela!
+
+---
+
+## 📦 Instalação e Execução
+
+```bash
+# Instalar dependências
+npm install
+
+# Rodar servidor de desenvolvimento
+npm run dev
+```
+
+---
+
+*Desenvolvido com 💜 e TypeScript.*

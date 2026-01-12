@@ -57,7 +57,7 @@ export class SpatialHashGrid {
    * Adiciona um objeto à célula correspondente.
    * Complexidade: O(1)
    */
-  addObject(obj: SpatialObject) {
+  insert(obj: SpatialObject) {
     const cellX = Math.floor(obj.position.x / this.cellSize);
     const cellY = Math.floor(obj.position.y / this.cellSize);
 

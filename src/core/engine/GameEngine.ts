@@ -1,5 +1,6 @@
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
+import { Boss } from '../entities/Boss';
 import { Particle } from '../entities/Particle';
 import { Projectile } from '../entities/Projectile';
 import { Vector2 } from './Vector2';
@@ -18,6 +19,7 @@ import { ObjectPool } from '../pool/ObjectPool';
  * - Separação clara entre lógica (Engine) e renderização (Canvas).
  * - Uso de Object Pooling para gerenciamento de memória.
  * - Spatial Hash Grid para otimização de colisões.
+ * - State Machine para fluxo de jogo.
  */
 export class GameEngine {
   player: Player;
@@ -43,6 +45,9 @@ export class GameEngine {
   // Estado do Jogo
   gameState: GameState = 'start';
   score: number = 0;
+  highScore: number = 0;
+  playTime: number = 0;
+  boss: Boss | null = null;
   
   // Efeitos Visuais e Câmera
   screenShake: number = 0;
@@ -61,6 +66,30 @@ export class GameEngine {
     // Pré-aloca objetos para evitar lag spikes durante o jogo
     this.particlePool = new ObjectPool<Particle>(() => new Particle(), 100);
     this.projectilePool = new ObjectPool<Projectile>(() => new Projectile(), 50);
+
+    this.loadHighScore();
+  }
+
+  loadHighScore() {
+    try {
+      const saved = localStorage.getItem('neon-survivor-highscore');
+      if (saved) {
+        this.highScore = parseInt(saved, 10);
+      }
+    } catch (e) {
+      console.warn('LocalStorage not available');
+    }
+  }
+
+  saveHighScore() {
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      try {
+        localStorage.setItem('neon-survivor-highscore', this.highScore.toString());
+      } catch (e) {
+        console.warn('LocalStorage not available');
+      }
+    }
   }
 
   /**
@@ -80,6 +109,8 @@ export class GameEngine {
   reset() {
     this.player = new Player(this.canvasWidth / 2, this.canvasHeight / 2);
     this.enemies = [];
+    this.boss = null;
+    this.playTime = 0;
     
     // Libera todos os objetos ativos de volta para o pool
     this.activeParticles.forEach(p => this.particlePool.release(p));
@@ -111,18 +142,13 @@ export class GameEngine {
   }
 
   /**
-   * Cria um novo projétil usando Object Pooling.
-   * Evita 'new Projectile()' para reduzir pressão no GC.
+   * Dispara projétil(eis) delegando a estratégia da arma do jogador.
    */
   spawnProjectile(target: Vector2) {
-    if (this.gameState !== 'playing') return;
+    if (this.gameState !== 'playing' && this.gameState !== 'boss_fight') return;
     
-    const worldTarget = target.add(this.camera);
-    const direction = worldTarget.sub(this.player.position).normalize();
-    
-    // Obtém instância reciclada
-    const proj = this.projectilePool.get(this.player.position.x, this.player.position.y, direction);
-    this.activeProjectiles.push(proj);
+    // O Player agora decide COMO atirar (Strategy Pattern)
+    this.player.shoot(target, this);
   }
 
   /**
@@ -140,7 +166,17 @@ export class GameEngine {
    * @param deltaTime Tempo decorrido desde o último frame (em segundos).
    */
   update(deltaTime: number) {
-    if (this.gameState !== 'playing') return;
+    if (this.gameState !== 'playing' && this.gameState !== 'boss_fight') return;
+
+    // Gerenciamento de Estados e Tempo
+    this.playTime += deltaTime;
+
+    // State Machine: Transição para Boss Fight após 60 segundos
+    if (this.gameState === 'playing' && this.playTime >= 60) {
+        this.gameState = 'boss_fight';
+        this.spawnBoss();
+        AudioManager.getInstance().playPowerUp(); // Som de alerta
+    }
 
     // Decaimento do Screen Shake
     if (this.screenShake > 0) {
@@ -167,209 +203,208 @@ export class GameEngine {
     
     // Spawning Inimigos
     this.spawnTimer += deltaTime;
-    if (this.spawnTimer > Math.max(0.2, 1.0 - this.player.level * 0.05)) {
+    // Se estiver no Boss, spawna menos inimigos
+    const shouldSpawn = this.gameState === 'playing' || (this.gameState === 'boss_fight' && this.spawnTimer > 3.0);
+    
+    if (shouldSpawn && this.spawnTimer > Math.max(0.2, 1.0 - this.player.level * 0.05)) {
       this.spawnEnemy();
       this.spawnTimer = 0;
     }
 
+    // Atualização de Boss
+    if (this.boss && !this.boss.isDead) {
+        this.boss.update(deltaTime, this.player);
+    }
+
     // Atualização de Entidades (Inimigos)
-    // Usamos filter aqui pois inimigos não estão em pool ainda (poderiam estar)
-    // Para simplificar o escopo atual, mantemos array simples
-    this.enemies = this.enemies.filter(enemy => {
-        enemy.update(deltaTime, this.player);
-        return !enemy.isDead;
+    this.activeParticles = this.activeParticles.filter(p => {
+      p.update(deltaTime);
+      if (p.life <= 0) {
+        this.particlePool.release(p);
+        return false;
+      }
+      return true;
     });
 
-    // Atualização Otimizada de Partículas (Sem filter/new array)
-    for (let i = this.activeParticles.length - 1; i >= 0; i--) {
-        const p = this.activeParticles[i];
-        p.update(deltaTime);
-        if (p.isDead) {
-            this.particlePool.release(p);
-            // Swap-remove: O(1)
-            this.activeParticles[i] = this.activeParticles[this.activeParticles.length - 1];
-            this.activeParticles.pop();
-        }
-    }
+    this.activeProjectiles = this.activeProjectiles.filter(p => {
+      p.update(deltaTime);
+      if (p.isDead) {
+        this.projectilePool.release(p);
+        return false;
+      }
+      return true;
+    });
 
-    // Atualização Otimizada de Projéteis
-    for (let i = this.activeProjectiles.length - 1; i >= 0; i--) {
-        const p = this.activeProjectiles[i];
-        p.update(deltaTime);
-        if (p.isDead) {
-            this.projectilePool.release(p);
-            this.activeProjectiles[i] = this.activeProjectiles[this.activeProjectiles.length - 1];
-            this.activeProjectiles.pop();
-        }
-    }
+    this.enemies = this.enemies.filter(e => {
+      e.update(deltaTime, this.player);
+      return !e.isDead;
+    });
+    
+    // PowerUps update
+    this.powerUps = this.powerUps.filter(p => !p.collected);
 
-    this.powerUps.forEach(p => p.update(deltaTime));
-    this.powerUps = this.powerUps.filter(p => p.lifeTime > 0);
-
-    // Otimização: Reconstrução da Spatial Hash Grid
-    // Custo linear O(N) para inserir
-    this.grid.clear();
-    this.enemies.forEach(e => this.grid.addObject({ 
-      position: e.position, 
-      radius: e.radius, 
-      type: 'enemy',
-      entity: e 
-    }));
-    this.powerUps.forEach(p => this.grid.addObject({
-        position: p.position, 
-        radius: p.radius, 
-        type: 'powerup',
-        entity: p
-    }));
-
+    // Detecção de Colisões
     this.checkCollisions();
   }
 
-  /**
-   * Verifica e resolve colisões usando Spatial Partitioning.
-   */
-  checkCollisions() {
-    // 1. Projétil vs Inimigo (Broad Phase com Grid)
-    for (const proj of this.activeProjectiles) {
-      if (proj.isDead) continue;
-      
-      const candidates = this.grid.retrieve({ 
-          position: proj.position, radius: proj.radius 
-      });
-
-      for (const obj of candidates) {
-        if (obj.type !== 'enemy' || !obj.entity) continue;
-        const enemy = obj.entity as Enemy;
-        if (enemy.isDead) continue;
-
-        // Narrow Phase: Distância
-        if (Vector2.distance(proj.position, enemy.position) < proj.radius + enemy.radius) {
-            proj.isDead = true; // Será removido no próximo update loop via pool
-            enemy.takeDamage(1);
-            
-            if (enemy.isDead) {
-                this.handleEnemyDeath(enemy);
-            } else {
-                this.spawnParticles(enemy.position, 5, 'white');
-            }
-            break; 
-        }
-      }
-    }
-    
-    // 2. Player vs Inimigo
-    const nearbyObjects = this.grid.retrieve({
-        position: this.player.position, radius: this.player.radius
-    });
-
-    for (const obj of nearbyObjects) {
-        if (obj.type === 'enemy' && obj.entity) {
-            const enemy = obj.entity as Enemy;
-            if (enemy.isDead) continue;
-
-            if (Vector2.distance(this.player.position, enemy.position) < this.player.radius + enemy.radius) {
-                this.player.takeDamage(10);
-                this.screenShake = 15;
-                this.hitStopTimer = 0.1; // 100ms de Hit-Stop
-                enemy.isDead = true;
-                this.spawnParticles(enemy.position, 10, enemy.color);
-                AudioManager.getInstance().playExplosion();
-                
-                if (this.player.hp <= 0) {
-                    this.gameState = 'gameover';
-                }
-            }
-        }
-        // 3. Player vs PowerUps
-        else if (obj.type === 'powerup' && obj.entity) {
-             const p = obj.entity as PowerUp;
-             if (p.lifeTime <= 0) continue;
-
-             if (Vector2.distance(this.player.position, p.position) < this.player.radius + p.radius) {
-                 AudioManager.getInstance().playPowerUp();
-                 if (p.type === 'health') this.player.heal(p.value);
-                 if (p.type === 'xp') this.player.addXp(p.value);
-                 p.lifeTime = 0;
-             }
-        }
-    }
-  }
-
-  handleEnemyDeath(enemy: Enemy) {
-      this.spawnParticles(enemy.position, 15, enemy.color);
-      this.player.addXp(20);
-      this.score += 100;
-      this.screenShake = 5;
-      AudioManager.getInstance().playExplosion();
-
-      const drop = PowerUpFactory.createRandomDrop(enemy.position.x, enemy.position.y);
-      if (drop) {
-          this.powerUps.push(drop);
-      }
-  }
-
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    
-    ctx.fillStyle = '#050505';
-    ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
-    
-    this.drawBackgroundGrid(ctx);
-
-    ctx.save();
-    
-    let shakeX = 0, shakeY = 0;
-    if (this.screenShake > 0) {
-      shakeX = (Math.random() - 0.5) * this.screenShake;
-      shakeY = (Math.random() - 0.5) * this.screenShake;
-    }
-    
-    ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
-
-    this.powerUps.forEach(p => p.draw(ctx));
-    this.activeParticles.forEach(p => p.draw(ctx));
-    this.enemies.forEach(e => e.draw(ctx));
-    this.activeProjectiles.forEach(p => p.draw(ctx));
-    this.player.draw(ctx);
-    
-    ctx.restore();
-  }
-
-  drawBackgroundGrid(ctx: CanvasRenderingContext2D) {
-    const gridSize = 100;
-    const offsetX = -this.camera.x % gridSize;
-    const offsetY = -this.camera.y % gridSize;
-
-    ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-
-    for (let x = offsetX; x < this.canvasWidth; x += gridSize) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, this.canvasHeight);
-    }
-    for (let y = offsetY; y < this.canvasHeight; y += gridSize) {
-      ctx.moveTo(0, y);
-      ctx.lineTo(this.canvasWidth, y);
-    }
-    ctx.stroke();
+  spawnBoss() {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 800;
+    const x = this.player.position.x + Math.cos(angle) * distance;
+    const y = this.player.position.y + Math.sin(angle) * distance;
+    this.boss = new Boss(x, y);
   }
 
   spawnEnemy() {
-    const buffer = 50;
-    const edge = Math.floor(Math.random() * 4);
-    let x = 0, y = 0;
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.max(this.canvasWidth, this.canvasHeight) / 1.5; // Spawn off-screen
+    const x = this.player.position.x + Math.cos(angle) * distance;
+    const y = this.player.position.y + Math.sin(angle) * distance;
     
-    const left = this.camera.x - buffer;
-    const right = this.camera.x + this.canvasWidth + buffer;
-    const top = this.camera.y - buffer;
-    const bottom = this.camera.y + this.canvasHeight + buffer;
+    const enemy = new Enemy(x, y);
+    // Aumenta dificuldade com o tempo
+    enemy.speed += this.player.level * 5;
+    this.enemies.push(enemy);
+  }
 
-    if (edge === 0) { x = Math.random() * (right - left) + left; y = top; }
-    else if (edge === 1) { x = right; y = Math.random() * (bottom - top) + top; }
-    else if (edge === 2) { x = Math.random() * (right - left) + left; y = bottom; }
-    else { x = left; y = Math.random() * (bottom - top) + top; }
+  checkCollisions() {
+    // 1. Popula a grade espacial
+    this.grid.clear();
+    this.enemies.forEach(e => this.grid.insert(e));
+    if (this.boss && !this.boss.isDead) this.grid.insert(this.boss);
+
+    // 2. Projéteis vs Inimigos/Boss
+    this.activeProjectiles.forEach(proj => {
+      const nearbyEnemies = this.grid.retrieve(proj) as Enemy[];
+      
+      for (const enemy of nearbyEnemies) {
+        if (enemy.isDead) continue;
+
+        const dist = Vector2.distance(proj.position, enemy.position);
+        if (dist < enemy.radius + proj.radius) {
+          enemy.takeDamage(10);
+          proj.isDead = true;
+          
+          this.spawnParticles(enemy.position, 5, enemy.color);
+          
+          if (enemy.isDead) {
+            this.handleEnemyDeath(enemy);
+          }
+          break; // Um projétil atinge apenas um inimigo
+        }
+      }
+    });
+
+    // 3. Player vs Inimigos/Boss
+    const nearbyToPlayer = this.grid.retrieve(this.player) as Enemy[];
+    for (const enemy of nearbyToPlayer) {
+      if (enemy.isDead) continue;
+
+      const dist = Vector2.distance(this.player.position, enemy.position);
+      if (dist < this.player.radius + enemy.radius) {
+        // Game Over
+        this.gameState = 'gameover';
+        this.saveHighScore();
+        this.screenShake = 20;
+        AudioManager.getInstance().playExplosion();
+      }
+    }
+
+    // 4. Player vs PowerUps
+    this.powerUps.forEach(p => {
+        if (p.collected) return;
+        const dist = Vector2.distance(this.player.position, p.position);
+        if (dist < this.player.radius + p.radius) {
+            p.collected = true;
+            p.effect(this.player, this);
+            AudioManager.getInstance().playPowerUp();
+        }
+    });
+  }
+
+  handleEnemyDeath(enemy: Enemy) {
+    if (enemy instanceof Boss) {
+        // Boss Defeated!
+        this.score += 5000;
+        this.screenShake = 50; // HUGE SHAKE
+        this.spawnParticles(enemy.position, 100, '#ff0055');
+        this.boss = null;
+        this.gameState = 'playing'; // Volta ao normal?
+        this.playTime = 0; // Reseta timer do boss
+        this.saveHighScore();
+        this.player.addXp(1000); // Level up garantido
+    } else {
+        this.score += 10;
+        this.player.addXp(20);
+        
+        // Chance de 5% de dropar PowerUp
+        if (Math.random() < 0.05) {
+            const pu = PowerUpFactory.createRandomDrop(enemy.position.x, enemy.position.y);
+            if (pu) this.powerUps.push(pu);
+        }
+    }
     
-    this.enemies.push(new Enemy(x, y));
+    AudioManager.getInstance().playExplosion();
+  }
+
+  /**
+   * Renderiza o jogo.
+   * Chamado a cada frame pelo Game Loop.
+   */
+  draw(ctx: CanvasRenderingContext2D) {
+    // Limpa a tela (background)
+    ctx.fillStyle = '#050505'; 
+    ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    
+    ctx.save();
+
+    // 1. Screen Shake Effect
+    if (this.screenShake > 0) {
+      const dx = (Math.random() - 0.5) * this.screenShake;
+      const dy = (Math.random() - 0.5) * this.screenShake;
+      ctx.translate(dx, dy);
+    }
+
+    // 2. Câmera (World Space -> Screen Space)
+    ctx.translate(-this.camera.x, -this.camera.y);
+
+    // 3. Grid
+    this.drawGrid(ctx);
+
+    // 4. Entidades
+    this.powerUps.forEach(p => p.draw(ctx));
+    this.activeParticles.forEach(p => p.draw(ctx));
+    this.enemies.forEach(e => e.draw(ctx));
+    
+    if (this.boss && !this.boss.isDead) {
+        this.boss.draw(ctx);
+    }
+    
+    this.activeProjectiles.forEach(p => p.draw(ctx));
+    this.player.draw(ctx);
+
+    ctx.restore();
+  }
+
+  private drawGrid(ctx: CanvasRenderingContext2D) {
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 2;
+      const gridSize = 100;
+      
+      const startX = Math.floor(this.camera.x / gridSize) * gridSize;
+      const startY = Math.floor(this.camera.y / gridSize) * gridSize;
+      const endX = startX + this.canvasWidth + gridSize;
+      const endY = startY + this.canvasHeight + gridSize;
+
+      ctx.beginPath();
+      for (let x = startX; x <= endX; x += gridSize) {
+          ctx.moveTo(x, startY);
+          ctx.lineTo(x, endY);
+      }
+      for (let y = startY; y <= endY; y += gridSize) {
+          ctx.moveTo(startX, y);
+          ctx.lineTo(endX, y);
+      }
+      ctx.stroke();
   }
 }

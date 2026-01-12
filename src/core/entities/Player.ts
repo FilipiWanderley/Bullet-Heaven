@@ -1,4 +1,8 @@
 import { GameObject } from './GameObject';
+import { DefaultWeaponStrategy } from '../strategies/WeaponStrategies';
+import type { WeaponStrategy } from '../strategies/WeaponStrategies';
+import type { GameEngine } from '../engine/GameEngine';
+import { Vector2 } from '../engine/Vector2';
 
 /**
  * Representa o jogador controlado pelo usuário.
@@ -13,10 +17,29 @@ export class Player extends GameObject {
   xpToNextLevel: number = 100;
   invulnerableTimer: number = 0;
   trail: { x: number, y: number, alpha: number }[] = [];
+  
+  // Strategy Pattern para armas
+  weaponStrategy: WeaponStrategy;
 
   constructor(x: number, y: number) {
     super(x, y, 15, 'white');
+    this.weaponStrategy = new DefaultWeaponStrategy();
   }
+
+  /**
+   * Executa o disparo usando a estratégia atual.
+   */
+  shoot(target: Vector2, engine: GameEngine) {
+      this.weaponStrategy.shoot(this, target, engine);
+  }
+
+  /**
+   * Troca a estratégia de arma (Upgrade).
+   */
+  setWeaponStrategy(strategy: WeaponStrategy) {
+      this.weaponStrategy = strategy;
+  }
+
 
   update(deltaTime: number) {
     // Reduz o temporizador de invulnerabilidade se ativo

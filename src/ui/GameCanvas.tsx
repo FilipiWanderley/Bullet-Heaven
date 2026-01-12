@@ -14,9 +14,13 @@ export const GameCanvas = () => {
   const [gameState, setGameState] = useState<GameState>('start');
   const [hudState, setHudState] = useState({
     score: 0,
+    highScore: 0,
     level: 1,
     xp: 0,
-    maxXp: 100
+    maxXp: 100,
+    hp: 100,
+    maxHp: 100,
+    boss: null as { hp: number; maxHp: number; name: string; } | null
   });
 
   // Refs para inputs (para não depender do ciclo de render do React)
@@ -93,13 +97,24 @@ export const GameCanvas = () => {
     if (
       engine.score !== hudState.score ||
       engine.player.xp !== hudState.xp ||
-      engine.player.level !== hudState.level
+      engine.player.level !== hudState.level ||
+      engine.player.hp !== hudState.hp ||
+      (engine.boss && engine.boss.hp !== hudState.boss?.hp) ||
+      (!engine.boss && hudState.boss)
     ) {
       setHudState({
         score: engine.score,
+        highScore: engine.highScore,
         level: engine.player.level,
         xp: engine.player.xp,
-        maxXp: engine.player.xpToNextLevel
+        maxXp: engine.player.xpToNextLevel,
+        hp: engine.player.hp,
+        maxHp: engine.player.maxHp,
+        boss: engine.boss ? { 
+            hp: engine.boss.hp, 
+            maxHp: engine.boss.maxHp, 
+            name: 'CYBER LORD' 
+        } : null
       });
     }
   };
@@ -133,17 +148,21 @@ export const GameCanvas = () => {
         <StartScreen 
           onStart={handleStartGame} 
           title="GAME OVER" 
-          subtitle={`Score Final: ${hudState.score}`}
+          subtitle={`Score Final: ${hudState.score} | High Score: ${hudState.highScore}`}
           buttonText="TENTAR NOVAMENTE"
         />
       )}
 
-      {gameState === 'playing' && (
+      {(gameState === 'playing' || gameState === 'boss_fight') && (
         <HUD 
           score={hudState.score}
+          highScore={hudState.highScore}
           level={hudState.level}
           xp={hudState.xp}
           maxXp={hudState.maxXp}
+          hp={hudState.hp}
+          maxHp={hudState.maxHp}
+          boss={hudState.boss}
         />
       )}
     </div>

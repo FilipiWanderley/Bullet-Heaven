@@ -1,4 +1,4 @@
-export type GameState = 'start' | 'playing' | 'gameover';
+export type GameState = 'start' | 'playing' | 'boss_fight' | 'gameover';
 
 export interface InputKeys {
   [key: string]: boolean;
