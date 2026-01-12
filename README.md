@@ -62,5 +62,10 @@ Este projeto foi otimizado para o VS Code. Siga os passos abaixo:
 3. Acesse o jogo:
    O servidor iniciará automaticamente (geralmente em `http://localhost:5173`).
 
+## 🔗 Links
+
+- **GitHub Repository**: [Acesse o Código Fonte](https://github.com/FilipiWanderley/Bullet-Heaven)
+- **Vercel Deployment**: [Jogue Agora](https://neon-survivor.vercel.app)
+
 ---
 *Desenvolvido com paixão e rigor técnico por Filipi Moraes.*
