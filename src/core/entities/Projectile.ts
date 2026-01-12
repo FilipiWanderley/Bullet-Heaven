@@ -1,20 +1,54 @@
 import { GameObject } from './GameObject';
-import { Vector2 } from '../physics/Vector2';
+import { Vector2 } from '../engine/Vector2';
+import type { Poolable } from '../pool/ObjectPool';
 
 /**
  * Projétil disparado pelo jogador.
- * Viaja em linha reta até atingir algo ou expirar.
+ * Implementa Poolable para reutilização de memória.
  */
-export class Projectile extends GameObject {
+export class Projectile extends GameObject implements Poolable {
   speed: number = 600;
-  life: number = 2.0; // Tempo de vida antes de desaparecer
+  life: number = 2.0;
+  active: boolean = false;
 
-  constructor(x: number, y: number, direction: Vector2) {
-    super(x, y, 5, 'yellow');
+  constructor() {
+    // Inicializa zerado para o Pool
+    super(0, 0, 5, 'yellow');
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    if (!this.active) return;
+    
+    ctx.beginPath();
+    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    
+    // Bloom Effect (Brilho intenso)
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+    
+    ctx.fill();
+    ctx.closePath();
+    
+    ctx.shadowBlur = 0; // Reset para não poluir o contexto
+  }
+
+  /**
+   * Reinicializa o projétil para uso.
+   * Chamado pelo ObjectPool ao reciclar uma instância.
+   */
+  reset(x: number, y: number, direction: Vector2) {
+    this.position.x = x;
+    this.position.y = y;
     this.velocity = direction.normalize().scale(this.speed);
+    this.life = 2.0;
+    this.isDead = false;
+    this.active = true;
   }
 
   update(deltaTime: number) {
+    if (!this.active) return;
+    
     this.life -= deltaTime;
     if (this.life <= 0) {
       this.isDead = true;

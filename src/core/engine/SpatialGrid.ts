@@ -1,10 +1,9 @@
-
 /**
  * Interface para objetos que podem ser inseridos na grade espacial.
  * Exige posição e raio para cálculo de colisão.
  */
 export interface SpatialObject {
-  id?: string; // Opcional, se quisermos usar mapa
+  id?: string;
   position: { x: number, y: number };
   radius: number;
   type?: string;
@@ -12,15 +11,15 @@ export interface SpatialObject {
 }
 
 /**
- * Sistema de Particionamento Espacial (Spatial Partitioning).
- * Divide o mundo do jogo em uma grade de células fixas.
- * Otimiza a detecção de colisão de O(N^2) para O(N * K), onde K é pequeno (vizinhos).
+ * Sistema de Particionamento Espacial (Spatial Hash Grid).
+ * Otimização de Algoritmo O(N).
  * 
- * Estratégia:
- * - Cada célula armazena uma lista de objetos que estão dentro dela.
- * - Para checar colisão de um objeto, verificamos apenas os objetos na mesma célula e nas adjacentes.
+ * Justificativa Técnica:
+ * Em vez de comparar todos contra todos (O(N^2)), dividimos o espaço em "baldes" (células).
+ * Apenas entidades no mesmo balde (e vizinhos) são testadas.
+ * Isso reduz drasticamente as verificações de colisão em cenários com muitas entidades.
  */
-export class SpatialGrid {
+export class SpatialHashGrid {
   private cellSize: number;
   private width: number;
   private height: number;
@@ -35,14 +34,14 @@ export class SpatialGrid {
     this.cols = Math.ceil(width / cellSize);
     this.rows = Math.ceil(height / cellSize);
     
-    // Inicializa a grade vazia
+    // Inicializa a grade
     this.grid = [];
     this.clear();
   }
 
   /**
    * Limpa a grade para reconstrução a cada frame.
-   * Em jogos dinâmicos, reconstruir é frequentemente mais rápido que atualizar.
+   * Em jogos dinâmicos, reconstruir é mais eficiente que mover objetos entre células.
    */
   clear() {
     this.grid = [];
@@ -55,31 +54,29 @@ export class SpatialGrid {
   }
 
   /**
-   * Adiciona um objeto à(s) célula(s) correspondente(s).
-   * Se um objeto estiver na borda, ele pode pertencer a múltiplas células?
-   * Simplificação: Adicionamos baseados no centro. Para colisão precisa,
-   * checamos vizinhos de qualquer forma.
+   * Adiciona um objeto à célula correspondente.
+   * Complexidade: O(1)
    */
   addObject(obj: SpatialObject) {
     const cellX = Math.floor(obj.position.x / this.cellSize);
     const cellY = Math.floor(obj.position.y / this.cellSize);
 
-    // Verifica limites para não crashar se sair da tela
     if (cellX >= 0 && cellX < this.cols && cellY >= 0 && cellY < this.rows) {
       this.grid[cellX][cellY].push(obj);
     }
   }
 
   /**
-   * Recupera possíveis candidatos a colisão para um dado objeto.
-   * Retorna objetos na mesma célula e nas 8 células vizinhas.
+   * Recupera candidatos a colisão (Broad Phase).
+   * Retorna objetos na mesma célula e nas adjacentes (3x3).
+   * Complexidade: O(1) (constante, pois checa no máximo 9 células)
    */
   retrieve(obj: SpatialObject): SpatialObject[] {
     const cellX = Math.floor(obj.position.x / this.cellSize);
     const cellY = Math.floor(obj.position.y / this.cellSize);
     const candidates: SpatialObject[] = [];
 
-    // Itera sobre 3x3 células ao redor do objeto (incluindo a própria)
+    // Verifica 3x3 vizinhos para lidar com objetos na borda das células
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
         const checkX = cellX + i;
@@ -87,8 +84,6 @@ export class SpatialGrid {
 
         if (checkX >= 0 && checkX < this.cols && checkY >= 0 && checkY < this.rows) {
           const cellObjects = this.grid[checkX][checkY];
-          // Adiciona objetos da célula vizinha
-          // Usamos um loop for simples por performance (evitar spread/concat em hot path)
           for (let k = 0; k < cellObjects.length; k++) {
             candidates.push(cellObjects[k]);
           }

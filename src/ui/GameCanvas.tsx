@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GameEngine } from '../core/GameEngine';
-import { Vector2 } from '../core/physics/Vector2';
+import { GameEngine } from '../core/engine/GameEngine';
+import { Vector2 } from '../core/engine/Vector2';
 import { useGameLoop } from '../hooks/useGameLoop';
-import { StartScreen } from './ui/StartScreen';
-import { HUD } from './ui/HUD';
+import { StartScreen } from './StartScreen';
+import { HUD } from './HUD';
 import type { GameState } from '../types';
 
 export const GameCanvas = () => {

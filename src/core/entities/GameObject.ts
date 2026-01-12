@@ -1,4 +1,4 @@
-import { Vector2 } from '../physics/Vector2';
+import { Vector2 } from '../engine/Vector2';
 
 /**
  * Classe base para todos os objetos do jogo.

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { GameEngine } from '../core/GameEngine';
+import { GameEngine } from '../core/engine/GameEngine';
 
 /**
  * Hook personalizado para gerenciar o loop de jogo (Game Loop).
