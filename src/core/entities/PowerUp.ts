@@ -41,7 +41,7 @@ export class PowerUp extends GameObject {
   /**
    * Aplica o efeito do PowerUp no jogador/engine
    */
-  effect(player: Player, engine: GameEngine) {
+  effect(player: Player) {
       switch (this.type) {
           case 'health':
               // Lógica de cura (Player precisaria ter HP, por enquanto não tem no código visto, mas vamos assumir ou adicionar)

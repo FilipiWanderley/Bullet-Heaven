@@ -2,7 +2,6 @@ import React from 'react';
 
 interface StartScreenProps {
   onStart: () => void;
-  title?: string;
   subtitle?: string;
   buttonText?: string;
 }
@@ -13,7 +12,6 @@ interface StartScreenProps {
  */
 export const StartScreen: React.FC<StartScreenProps> = ({
   onStart,
-  title = "NEON SURVIVOR",
   subtitle = "Sobreviva ao enxame cibernético",
   buttonText = "INICIAR MISSÃO"
 }) => {

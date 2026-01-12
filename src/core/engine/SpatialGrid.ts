@@ -21,15 +21,11 @@ export interface SpatialObject {
  */
 export class SpatialHashGrid {
   private cellSize: number;
-  private width: number;
-  private height: number;
   private cols: number;
   private rows: number;
   private grid: SpatialObject[][][];
 
   constructor(width: number, height: number, cellSize: number) {
-    this.width = width;
-    this.height = height;
     this.cellSize = cellSize;
     this.cols = Math.ceil(width / cellSize);
     this.rows = Math.ceil(height / cellSize);

@@ -151,7 +151,6 @@ export const GameCanvas = () => {
       {gameState === 'gameover' && (
         <StartScreen 
           onStart={handleStartGame} 
-          title="GAME OVER" 
           subtitle={`Score Final: ${hudState.score} | High Score: ${hudState.highScore}`}
           buttonText="TENTAR NOVAMENTE"
         />

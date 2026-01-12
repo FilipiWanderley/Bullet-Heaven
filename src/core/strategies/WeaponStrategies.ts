@@ -68,7 +68,7 @@ export class TripleShotWeaponStrategy implements WeaponStrategy {
 export class OrbitalFireStrategy implements WeaponStrategy {
     private angle: number = 0;
 
-    shoot(player: Player, target: Vector2, engine: GameEngine): void {
+    shoot(player: Player, _target: Vector2, engine: GameEngine): void {
         // Dispara 4 projéteis em cruz giratória a cada clique
         for (let i = 0; i < 4; i++) {
             this.angle += (Math.PI / 2) + 0.1; // 90 graus + rotação

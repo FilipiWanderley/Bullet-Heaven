@@ -1,6 +1,5 @@
 import { Enemy } from './Enemy';
 import { Player } from './Player';
-import { Vector2 } from '../engine/Vector2';
 
 /**
  * Entidade Boss: O desafio final.
