@@ -21,93 +21,85 @@ export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp
   const xpPercentage = Math.min(100, Math.max(0, (xp / maxXp) * 100));
   // Calcula a porcentagem de HP
   const hpPercentage = Math.min(100, Math.max(0, (hp / maxHp) * 100));
+  const isLowHp = hp > 0 && hpPercentage <= 25;
 
   return (
-    <div className="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between">
-      {/* Top Bar: Level, Score & Boss */}
-      <div className="w-full flex flex-col gap-4">
-        
-        {/* Main Stats Row */}
-        <div className="flex justify-between items-start w-full">
-          
-          {/* Player Stats Container (Level, XP, HP) */}
-          <div className="flex flex-col gap-2 w-72">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">
+    <div className={`absolute inset-0 pointer-events-none p-4 md:p-6 flex flex-col justify-between${isLowHp ? ' ring-4 ring-red-500/70 animate-pulse' : ''}`}>
+      <div className="w-full flex flex-col gap-3 md:gap-4">
+        <div className="flex justify-between items-start w-full gap-3 md:gap-6">
+          <div className="flex flex-col gap-2 w-48 md:w-72 px-3 py-2 md:px-4 md:py-3 rounded-xl bg-black/55 border border-cyan-500/30 shadow-[0_0_25px_rgba(34,211,238,0.45)]">
+            <div className="flex items-center justify-between">
+              <span className="text-base md:text-lg font-bold text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.9)]">
                 LVL {level}
               </span>
-              <span className="text-sm text-cyan-200/70">
+              <span className="text-[11px] md:text-xs text-cyan-100/80">
                 {xp} / {maxXp} XP
               </span>
             </div>
-            
-            {/* XP Bar */}
-            <div className="w-full h-2 bg-gray-900/80 border border-cyan-900/50 rounded-sm overflow-hidden mb-1">
-              <div 
-                className="h-full bg-gradient-to-r from-cyan-600 to-purple-600 transition-all duration-300 ease-out"
+
+            <div className="w-full h-2 bg-slate-900/80 border border-cyan-900/60 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-500 transition-all duration-300 ease-out"
                 style={{ width: `${xpPercentage}%` }}
               />
             </div>
 
-            {/* HP Bar */}
             <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-red-400 w-6">HP</span>
-                <div className="flex-1 h-4 bg-gray-900/80 border border-red-900/50 rounded-sm overflow-hidden relative">
-                    {/* HP Text Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <span className="text-[10px] font-bold text-white drop-shadow-md">
-                            {Math.ceil(hp)} / {maxHp}
-                        </span>
-                    </div>
-                    {/* HP Fill */}
-                    <div 
-                        className="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-200 ease-out"
-                        style={{ width: `${hpPercentage}%` }}
-                    />
+              <span className="text-[10px] font-bold text-red-400 w-6">HP</span>
+              <div className="flex-1 h-4 bg-slate-900/90 border border-red-900/70 rounded-full overflow-hidden relative">
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <span className="text-[10px] font-bold text-white drop-shadow-[0_0_6px_rgba(0,0,0,0.9)]">
+                    {Math.ceil(hp)} / {maxHp}
+                  </span>
                 </div>
+                <div
+                  className="h-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 transition-all duration-200 ease-out"
+                  style={{ width: `${hpPercentage}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Boss Health Bar (Centered) */}
           {boss && (
-            <div className="flex flex-col items-center w-1/3 animate-pulse">
-                <span className="text-red-500 font-bold tracking-widest text-lg drop-shadow-[0_0_10px_red]">
-                    WARNING: {boss.name}
-                </span>
-                <div className="w-full h-4 bg-gray-900 border border-red-900 rounded-sm overflow-hidden mt-1">
-                    <div 
-                        className="h-full bg-red-600 transition-all duration-200"
-                        style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }}
-                    />
-                </div>
+            <div className="hidden md:flex flex-col items-center flex-1 px-4 py-2 rounded-xl bg-black/55 border border-red-500/40 shadow-[0_0_28px_rgba(248,113,113,0.55)]">
+              <span className="text-xs font-semibold tracking-[0.25em] uppercase text-red-400 mb-1">
+                Boss Online
+              </span>
+              <span className="text-sm md:text-base font-bold text-red-300 drop-shadow-[0_0_10px_rgba(248,113,113,0.9)]">
+                {boss.name}
+              </span>
+              <div className="mt-2 w-full h-3 bg-slate-900/90 border border-red-900/80 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-red-500 via-red-400 to-rose-400 transition-all duration-200"
+                  style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }}
+                />
+              </div>
             </div>
           )}
 
-          {/* Score Counter */}
-          <div className="flex flex-col items-end">
-            <div className="flex flex-col items-end mb-2">
-                 <span className="text-xs text-yellow-500/80 uppercase tracking-widest">
-                  High Score
-                </span>
-                <span className="text-xl font-mono font-bold text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">
-                  {highScore.toLocaleString()}
-                </span>
+          <div className="flex flex-col items-end px-3 py-2 md:px-4 md:py-3 rounded-xl bg-black/55 border border-yellow-400/30 shadow-[0_0_25px_rgba(250,204,21,0.55)] min-w-[140px]">
+            <div className="flex flex-col items-end mb-1">
+              <span className="text-[10px] md:text-xs text-yellow-400/90 uppercase tracking-[0.25em]">
+                High Score
+              </span>
+              <span className="text-lg md:text-xl font-mono font-bold text-yellow-300 drop-shadow-[0_0_6px_rgba(250,204,21,0.7)]">
+                {highScore.toLocaleString()}
+              </span>
             </div>
 
-            <span className="text-sm text-purple-300/70 uppercase tracking-widest">
-              Score
+            <span className="text-[10px] md:text-xs text-purple-300/80 uppercase tracking-[0.25em]">
+              Score Atual
             </span>
-            <span className="text-2xl md:text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+            <span className="text-3xl md:text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-100 to-slate-400 drop-shadow-[0_0_14px_rgba(255,255,255,0.45)]">
               {score.toLocaleString()}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Debug Info */}
       {debugInfo && (
         <div className="absolute bottom-4 left-4 text-xs font-mono text-green-500 bg-black/50 p-2 rounded pointer-events-auto select-text">
-            <pre>{debugInfo}</pre>
+          <pre>{debugInfo}</pre>
         </div>
       )}
     </div>

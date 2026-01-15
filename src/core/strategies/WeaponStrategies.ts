@@ -1,6 +1,7 @@
 import type { Player } from '../entities/Player';
 import type { GameEngine } from '../engine/GameEngine';
 import { Vector2 } from '../engine/Vector2';
+import { AudioManager } from '../audio/AudioManager';
 
 /**
  * Interface Strategy para comportamentos de ataque.
@@ -30,6 +31,7 @@ export class DefaultWeaponStrategy implements WeaponStrategy {
 
     const proj = engine.projectilePool.get(player.position.x, player.position.y, direction);
     engine.activeProjectiles.push(proj);
+    AudioManager.getInstance().playShoot();
   }
 }
 
@@ -58,6 +60,7 @@ export class TripleShotWeaponStrategy implements WeaponStrategy {
       const proj = engine.projectilePool.get(player.position.x, player.position.y, dir);
       engine.activeProjectiles.push(proj);
     });
+    AudioManager.getInstance().playShoot();
   }
 }
 
@@ -78,5 +81,6 @@ export class OrbitalFireStrategy implements WeaponStrategy {
             const proj = engine.projectilePool.get(player.position.x, player.position.y, dir);
             engine.activeProjectiles.push(proj);
         }
+        AudioManager.getInstance().playShoot();
     }
 }

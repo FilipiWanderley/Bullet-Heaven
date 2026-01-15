@@ -169,7 +169,10 @@ export const GameCanvas = () => {
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-neutral-900 overflow-hidden select-none touch-none">
+    <div className="relative w-full h-[100dvh] bg-gradient-to-b from-black via-slate-950 to-black overflow-hidden select-none touch-none">
+      <div className="pointer-events-none absolute -top-32 -left-24 w-72 h-72 bg-cyan-500/30 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-[-6rem] -right-24 w-80 h-80 bg-purple-500/30 blur-3xl" />
+
       {/* Camada do Canvas (Renderização do Jogo) */}
       <canvas
         ref={canvasRef}

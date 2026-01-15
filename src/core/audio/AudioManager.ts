@@ -88,4 +88,108 @@ export class AudioManager {
     osc.start(t);
     osc.stop(t + 0.3);
   }
+
+  playHeartbeat() {
+    if (!this.context || !this.masterGain) return;
+
+    const t = this.context.currentTime;
+    const osc = this.context.createOscillator();
+    osc.type = 'sine';
+
+    const gain = this.context.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.8, t + 0.03);
+    gain.gain.linearRampToValueAtTime(0, t + 0.25);
+
+    osc.frequency.setValueAtTime(80, t);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(t);
+    osc.stop(t + 0.3);
+  }
+
+  /**
+   * Toca um som de tiro.
+   * Som curto e percussivo.
+   */
+  playShoot() {
+    if (!this.context || !this.masterGain) return;
+
+    const t = this.context.currentTime;
+    const osc = this.context.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+
+    const gain = this.context.createGain();
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.1);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  /**
+   * Toca um som de impacto no inimigo.
+   * Som curto e metálico.
+   */
+  playEnemyHit() {
+    if (!this.context || !this.masterGain) return;
+
+    const t = this.context.currentTime;
+    const osc = this.context.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300, t);
+    osc.frequency.linearRampToValueAtTime(100, t + 0.1);
+
+    const gain = this.context.createGain();
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.1);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  /**
+   * Toca um som de dano no jogador.
+   * Som grave e "glitchy".
+   */
+  playPlayerDamage() {
+    if (!this.context || !this.masterGain) return;
+
+    const t = this.context.currentTime;
+    
+    // Oscilador 1: Grave
+    const osc1 = this.context.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(150, t);
+    osc1.frequency.linearRampToValueAtTime(50, t + 0.2);
+
+    // Oscilador 2: Dissonante
+    const osc2 = this.context.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(140, t); // Levemente desafinado
+    osc2.frequency.linearRampToValueAtTime(40, t + 0.2);
+
+    const gain = this.context.createGain();
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc1.start(t);
+    osc2.start(t);
+    osc1.stop(t + 0.3);
+    osc2.stop(t + 0.3);
+  }
 }

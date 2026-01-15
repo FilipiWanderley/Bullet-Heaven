@@ -59,6 +59,8 @@ export class GameEngine {
   // Efeitos Visuais e Câmera
   screenShake: number = 0;
   hitStopTimer: number = 0;
+  lowHpThreshold: number = 0.25;
+  lowHpBeepTimer: number = 0;
   camera: Vector2 = new Vector2(0, 0); // Posição da Câmera (World Space)
 
   constructor(width: number, height: number) {
@@ -141,6 +143,7 @@ export class GameEngine {
     this.powerUps = [];
     this.score = 0;
     this.screenShake = 0;
+    this.lowHpBeepTimer = 0;
     this.camera = new Vector2(0, 0);
   }
 
@@ -196,6 +199,23 @@ export class GameEngine {
 
   update(deltaTime: number) {
     if (this.gameState !== 'playing' && this.gameState !== 'boss_fight') return;
+
+    if (this.hitStopTimer > 0) {
+      this.hitStopTimer -= deltaTime;
+      if (this.hitStopTimer < 0) this.hitStopTimer = 0;
+      return;
+    }
+
+    if (this.lowHpBeepTimer > 0) {
+      this.lowHpBeepTimer -= deltaTime;
+      if (this.lowHpBeepTimer < 0) this.lowHpBeepTimer = 0;
+    }
+
+    const hpRatio = this.player.hp / this.player.maxHp;
+    if (hpRatio > 0 && hpRatio <= this.lowHpThreshold && this.lowHpBeepTimer === 0) {
+      AudioManager.getInstance().playHeartbeat();
+      this.lowHpBeepTimer = 0.8;
+    }
 
     // Gerenciamento de Estados e Tempo
     this.playTime += deltaTime;
@@ -357,11 +377,18 @@ export class GameEngine {
 
       const dist = Vector2.distance(this.player.position, enemy.position);
       if (dist < this.player.radius + enemy.radius) {
-        // Game Over
-        this.gameState = 'gameover';
-        this.saveHighScore();
-        this.screenShake = 20;
-        AudioManager.getInstance().playExplosion();
+        if (this.player.invulnerableTimer <= 0) {
+            this.player.takeDamage(10);
+            AudioManager.getInstance().playPlayerDamage();
+            this.screenShake = 15;
+            
+            if (this.player.hp <= 0) {
+                this.gameState = 'gameover';
+                this.saveHighScore();
+                this.screenShake = 30;
+                AudioManager.getInstance().playExplosion();
+            }
+        }
       }
     }
 
@@ -371,7 +398,11 @@ export class GameEngine {
         const dist = Vector2.distance(this.player.position, p.position);
         if (dist < this.player.radius + p.radius) {
             p.collected = true;
+            const prevLevel = this.player.level;
             p.effect(this.player);
+            if (this.player.level > prevLevel) {
+              this.handleLevelUpFeedback();
+            }
             AudioManager.getInstance().playPowerUp();
         }
     });
@@ -391,10 +422,19 @@ export class GameEngine {
         this.gameState = 'playing'; // Volta ao normal?
         this.playTime = 0; // Reseta timer do boss
         this.saveHighScore();
+
+        const prevLevel = this.player.level;
         this.player.addXp(1000); // Level up garantido
+        if (this.player.level > prevLevel) {
+          this.handleLevelUpFeedback();
+        }
     } else {
         this.score += 10;
+        const prevLevel = this.player.level;
         this.player.addXp(20);
+        if (this.player.level > prevLevel) {
+          this.handleLevelUpFeedback();
+        }
         
         // Chance de 5% de dropar PowerUp
         if (Math.random() < 0.05) {
@@ -407,6 +447,22 @@ export class GameEngine {
     // this.enemyPool.release(enemy);
     
     AudioManager.getInstance().playExplosion();
+  }
+
+  private handleLevelUpFeedback() {
+    this.screenShake = Math.max(this.screenShake, 25);
+    this.hitStopTimer = Math.max(this.hitStopTimer, 0.12);
+
+    const text = this.textPool.get(
+      this.player.position.x,
+      this.player.position.y - 60,
+      `LEVEL ${this.player.level}!`,
+      '#22d3ee'
+    );
+    this.activeTexts.push(text);
+
+    this.spawnParticles(this.player.position, 40, '#22d3ee');
+    AudioManager.getInstance().playPowerUp();
   }
 
   /**
