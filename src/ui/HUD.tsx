@@ -61,14 +61,14 @@ export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp
           </div>
 
           {boss && (
-            <div className="hidden md:flex flex-col items-center flex-1 px-4 py-2 rounded-xl bg-black/55 border border-red-500/40 shadow-[0_0_28px_rgba(248,113,113,0.55)]">
-              <span className="text-xs font-semibold tracking-[0.25em] uppercase text-red-400 mb-1">
-                Boss Online
+            <div className="flex flex-col items-center flex-1 px-2 py-1 md:px-4 md:py-2 rounded-xl bg-black/55 border border-red-500/40 shadow-[0_0_28px_rgba(248,113,113,0.55)] mx-2">
+              <span className="text-[10px] md:text-xs font-semibold tracking-[0.25em] uppercase text-red-400 mb-1">
+                Boss
               </span>
-              <span className="text-sm md:text-base font-bold text-red-300 drop-shadow-[0_0_10px_rgba(248,113,113,0.9)]">
+              <span className="text-xs md:text-base font-bold text-red-300 drop-shadow-[0_0_10px_rgba(248,113,113,0.9)] truncate max-w-[100px] md:max-w-none">
                 {boss.name}
               </span>
-              <div className="mt-2 w-full h-3 bg-slate-900/90 border border-red-900/80 rounded-full overflow-hidden">
+              <div className="mt-1 md:mt-2 w-full h-2 md:h-3 bg-slate-900/90 border border-red-900/80 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-red-500 via-red-400 to-rose-400 transition-all duration-200"
                   style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }}
@@ -77,7 +77,7 @@ export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp
             </div>
           )}
 
-          <div className="flex flex-col items-end px-3 py-2 md:px-4 md:py-3 rounded-xl bg-black/55 border border-yellow-400/30 shadow-[0_0_25px_rgba(250,204,21,0.55)] min-w-[140px]">
+          <div className="flex flex-col items-end px-3 py-2 md:px-4 md:py-3 rounded-xl bg-black/55 border border-yellow-400/30 shadow-[0_0_25px_rgba(250,204,21,0.55)] min-w-[100px] md:min-w-[140px]">
             <div className="flex flex-col items-end mb-1">
               <span className="text-[10px] md:text-xs text-yellow-400/90 uppercase tracking-[0.25em]">
                 High Score

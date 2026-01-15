@@ -43,21 +43,13 @@ export class PowerUp extends GameObject {
   effect(player: Player) {
       switch (this.type) {
           case 'health':
-              // Lógica de cura (Player precisaria ter HP, por enquanto não tem no código visto, mas vamos assumir ou adicionar)
-              // O código do Player não mostrou HP explicitamente no snippet anterior, mas o GameEngine tem GameOver se tocar.
-              // Vamos assumir que cura score ou algo visual por enquanto, ou adicionar HP ao Player.
-              // Vendo o código do Player.ts (vou precisar ler para confirmar se tem HP).
-              // Se não tiver, vamos dar Score extra ou XP.
-              player.addXp(this.value); 
+              player.heal(this.value);
               break;
           case 'xp':
               player.addXp(this.value);
               break;
           case 'weapon_triple':
               player.setWeaponStrategy(new TripleShotWeaponStrategy());
-              // Volta para weapon default após 10 segundos? Ou permanente?
-              // Vamos deixar permanente até pegar outro ou morrer.
-              // Opcional: Timeout.
               setTimeout(() => {
                   if (!player.isDead) player.setWeaponStrategy(new DefaultWeaponStrategy());
               }, 10000); // 10 segundos de poder

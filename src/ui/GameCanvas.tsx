@@ -57,8 +57,21 @@ export const GameCanvas = () => {
     const handleResize = () => {
       if (canvasRef.current && canvasRef.current.parentElement && engine) {
         const { clientWidth, clientHeight } = canvasRef.current.parentElement;
-        canvasRef.current.width = clientWidth;
-        canvasRef.current.height = clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        
+        // Ajusta o tamanho físico do canvas (pixels reais)
+        canvasRef.current.width = clientWidth * dpr;
+        canvasRef.current.height = clientHeight * dpr;
+        
+        // Ajusta o estilo para ocupar o espaço correto na tela
+        canvasRef.current.style.width = `${clientWidth}px`;
+        canvasRef.current.style.height = `${clientHeight}px`;
+        
+        // Escala o contexto para desenhar corretamente
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) ctx.scale(dpr, dpr);
+
+        // Atualiza a engine com o tamanho lógico (CSS pixels)
         engine.resize(clientWidth, clientHeight);
       }
     };
@@ -91,12 +104,14 @@ export const GameCanvas = () => {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!engine || !canvasRef.current) return;
-    
-    const touch = e.touches[0];
+
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+
     const rect = canvasRef.current.getBoundingClientRect();
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
-    
+
     lastMousePos.current = { x, y };
     engine.spawnProjectile(new Vector2(x, y));
   };
