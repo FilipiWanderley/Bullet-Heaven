@@ -24,6 +24,10 @@ export const GameCanvas = () => {
     maxXp: 100,
     hp: 100,
     maxHp: 100,
+    shieldCooldown: 0,
+    shieldMaxCooldown: 1,
+    eliteCooldown: 0,
+    eliteMaxCooldown: 1,
     boss: null as { hp: number; maxHp: number; name: string; } | null,
     debugInfo: ''
   });
@@ -137,11 +141,14 @@ export const GameCanvas = () => {
     }
 
     // Atualiza HUD apenas se houver mudanças significativas
+    // Incluindo cooldowns para feedback visual responsivo
     if (
       engine.score !== hudState.score ||
       engine.player.xp !== hudState.xp ||
       engine.player.level !== hudState.level ||
-      Math.abs(engine.player.hp - hudState.hp) > 1 || // Só atualiza se HP mudar > 1
+      Math.abs(engine.player.hp - hudState.hp) > 1 || 
+      Math.abs(engine.player.shieldCooldownTimer - hudState.shieldCooldown) > 0.1 ||
+      Math.abs(engine.player.eliteCooldown - hudState.eliteCooldown) > 0.1 ||
       (engine.boss && engine.boss.hp !== hudState.boss?.hp) ||
       (!engine.boss && hudState.boss)
     ) {
@@ -153,6 +160,10 @@ export const GameCanvas = () => {
         maxXp: engine.player.xpToNextLevel,
         hp: engine.player.hp,
         maxHp: engine.player.maxHp,
+        shieldCooldown: engine.player.shieldCooldownTimer,
+        shieldMaxCooldown: engine.player.shieldCooldown,
+        eliteCooldown: engine.player.eliteCooldown,
+        eliteMaxCooldown: 30.0, // Constante definida no Player.ts
         boss: engine.boss ? { 
             hp: engine.boss.hp, 
             maxHp: engine.boss.maxHp, 

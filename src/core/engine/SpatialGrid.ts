@@ -90,7 +90,7 @@ export class SpatialHashGrid {
    * 
    * @param outArray Array opcional para popular com os resultados (evita alocação)
    */
-  retrieve(obj: SpatialObject, outArray: SpatialObject[]): SpatialObject[] {
+  retrieve(obj: SpatialObject, outArray: SpatialObject[] = []): SpatialObject[] {
     const cellX = Math.floor(obj.position.x / this.cellSize);
     const cellY = Math.floor(obj.position.y / this.cellSize);
     

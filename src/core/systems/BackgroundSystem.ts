@@ -115,7 +115,7 @@ export class BackgroundSystem {
     }
   }
 
-  update(deltaTime: number, cameraVelocity: Vector2) {
+  update(deltaTime: number) {
     // Meteors logic
     this.meteorTimer += deltaTime;
     // Spawn meteor every 5-15 seconds

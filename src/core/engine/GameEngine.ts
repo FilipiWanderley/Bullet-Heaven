@@ -323,7 +323,7 @@ export class GameEngine {
     }
 
     // Atualiza Background
-    this.backgroundSystem.update(deltaTime, this.player.velocity);
+    this.backgroundSystem.update(deltaTime);
 
     // Gerenciamento de Estados e Tempo
     this.playTime += deltaTime;
@@ -886,25 +886,25 @@ export class GameEngine {
       ctx.restore();
   }
 
-  private drawGrid(ctx: CanvasRenderingContext2D) {
-      ctx.strokeStyle = '#1a1a1a';
-      ctx.lineWidth = 2;
-      const gridSize = 100;
+  // private drawGrid(ctx: CanvasRenderingContext2D) {
+  //     ctx.strokeStyle = '#1a1a1a';
+  //     ctx.lineWidth = 2;
+  //     const gridSize = 100;
       
-      const startX = Math.floor(this.camera.x / gridSize) * gridSize;
-      const startY = Math.floor(this.camera.y / gridSize) * gridSize;
-      const endX = startX + this.canvasWidth + gridSize;
-      const endY = startY + this.canvasHeight + gridSize;
+  //     const startX = Math.floor(this.camera.x / gridSize) * gridSize;
+  //     const startY = Math.floor(this.camera.y / gridSize) * gridSize;
+  //     const endX = startX + this.canvasWidth + gridSize;
+  //     const endY = startY + this.canvasHeight + gridSize;
 
-      ctx.beginPath();
-      for (let x = startX; x <= endX; x += gridSize) {
-          ctx.moveTo(x, startY);
-          ctx.lineTo(x, endY);
-      }
-      for (let y = startY; y <= endY; y += gridSize) {
-          ctx.moveTo(startX, y);
-          ctx.lineTo(endX, y);
-      }
-      ctx.stroke();
-  }
+  //     ctx.beginPath();
+  //     for (let x = startX; x <= endX; x += gridSize) {
+  //         ctx.moveTo(x, startY);
+  //         ctx.lineTo(x, endY);
+  //     }
+  //     for (let y = startY; y <= endY; y += gridSize) {
+  //         ctx.moveTo(startX, y);
+  //         ctx.lineTo(endX, y);
+  //     }
+  //     ctx.stroke();
+  // }
 }
