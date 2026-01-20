@@ -13,6 +13,7 @@ import { PowerUp } from '../entities/PowerUp';
 import { PowerUpFactory } from '../factories/PowerUpFactory';
 import { AudioManager } from '../audio/AudioManager';
 import { ObjectPool } from '../pool/ObjectPool';
+import { BackgroundSystem } from '../systems/BackgroundSystem';
 
 /**
  * Motor principal do jogo (Game Engine).
@@ -70,6 +71,7 @@ export class GameEngine {
   lowHpThreshold: number = 0.25;
   lowHpBeepTimer: number = 0;
   camera: Vector2 = new Vector2(0, 0); // Posição da Câmera (World Space)
+  backgroundSystem: BackgroundSystem;
 
   constructor(width: number, height: number) {
     this.canvasWidth = width;
@@ -78,6 +80,7 @@ export class GameEngine {
     
     // Inicializa a grade com células de 100px
     this.grid = new SpatialHashGrid(100);
+    this.backgroundSystem = new BackgroundSystem(width, height);
 
     // Inicializa Pools
     // Pré-aloca objetos para evitar lag spikes durante o jogo
@@ -98,6 +101,22 @@ export class GameEngine {
       // Debug: Spawn Boss
       if (e.code === 'KeyB') this.spawnBoss();
       if (e.code === 'KeyR' && this.gameState === 'gameover') this.startGame();
+      
+      // Habilidade: Escudo (Espaço)
+      if (e.code === 'Space') {
+        if (this.player.activateShield()) {
+            AudioManager.getInstance().playPowerUp(); // Som de ativação
+            this.spawnNeonExplosion(this.player.position, 20); // Efeito visual extra
+        }
+      }
+
+      // Habilidade: Elite Rocket (Shift)
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+          if (this.player.activateEliteMode()) {
+              AudioManager.getInstance().playPowerUp();
+              this.screenShake = 15; // Impacto visual
+          }
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -193,6 +212,7 @@ export class GameEngine {
     this.canvasWidth = width;
     this.canvasHeight = height;
     this.grid = new SpatialHashGrid(100);
+    this.backgroundSystem.resize(width, height);
   }
 
   /**
@@ -301,6 +321,9 @@ export class GameEngine {
       AudioManager.getInstance().playHeartbeat();
       this.lowHpBeepTimer = 0.8;
     }
+
+    // Atualiza Background
+    this.backgroundSystem.update(deltaTime, this.player.velocity);
 
     // Gerenciamento de Estados e Tempo
     this.playTime += deltaTime;
@@ -614,9 +637,8 @@ export class GameEngine {
    * Chamado a cada frame pelo Game Loop.
    */
   draw(ctx: CanvasRenderingContext2D) {
-    // Limpa a tela (background)
-    ctx.fillStyle = '#050505'; 
-    ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    // Renderiza o Background Dinâmico (Stars, Nebulas, Meteors)
+    this.backgroundSystem.draw(ctx, this.camera);
     
     ctx.save();
 
@@ -630,8 +652,8 @@ export class GameEngine {
     // 2. Câmera (World Space -> Screen Space)
     ctx.translate(-this.camera.x, -this.camera.y);
 
-    // 3. Grid
-    this.drawGrid(ctx);
+    // 3. Grid (Desativado em favor do Background Espacial)
+    // this.drawGrid(ctx);
 
     // 4. Entidades
     this.powerUps.forEach(p => p.draw(ctx));
@@ -681,6 +703,43 @@ export class GameEngine {
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx.globalCompositeOperation = 'lighter'; // "Luz"
         ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        ctx.restore();
+    }
+
+    // Distorção de Velocidade (Elite Mode)
+    if (this.player.eliteMode) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        
+        // Linhas de velocidade (Speed Lines)
+        const cx = this.canvasWidth / 2;
+        const cy = this.canvasHeight / 2;
+        
+        for (let i = 0; i < 20; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * 200 + 100;
+            const len = Math.random() * 100 + 50;
+            
+            const x1 = cx + Math.cos(angle) * dist;
+            const y1 = cy + Math.sin(angle) * dist;
+            const x2 = cx + Math.cos(angle) * (dist + len);
+            const y2 = cy + Math.sin(angle) * (dist + len);
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = `rgba(0, 255, 255, ${Math.random() * 0.5})`;
+            ctx.lineWidth = Math.random() * 2 + 1;
+            ctx.stroke();
+        }
+        
+        // Bordas Ciano
+        const grad = ctx.createRadialGradient(cx, cy, this.canvasWidth * 0.4, cx, cy, this.canvasWidth * 0.8);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0, 255, 255, 0.2)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        
         ctx.restore();
     }
 

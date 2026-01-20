@@ -20,6 +20,19 @@ export class Player extends GameObject {
   shieldActive: boolean = false;
   magnetActive: boolean = false;
   
+  // Habilidade de Escudo (Cyberpunk Skill)
+  shieldDuration: number = 5.0;
+  shieldCooldown: number = 20.0;
+  shieldTimer: number = 0.0;
+  shieldCooldownTimer: number = 0.0;
+  
+  // Habilidade Elite Rocket (Shift)
+  eliteMode: boolean = false;
+  eliteTimer: number = 0.0;
+  eliteCooldown: number = 0.0; // Opcional se for powerup, mas vamos por cooldown
+  eliteDuration: number = 5.0;
+  originalSpeed: number = 300;
+  
   // Strategy Pattern para armas
   weaponStrategy: WeaponStrategy;
 
@@ -43,7 +56,67 @@ export class Player extends GameObject {
   }
 
 
+  /**
+   * Tenta ativar a habilidade de escudo.
+   * Retorna true se ativou com sucesso.
+   */
+  activateShield(): boolean {
+    if (this.shieldCooldownTimer <= 0 && !this.shieldActive && !this.eliteMode) {
+        this.shieldActive = true;
+        this.shieldTimer = this.shieldDuration;
+        this.shieldCooldownTimer = this.shieldCooldown;
+        return true;
+    }
+    return false;
+  }
+
+  /**
+   * Ativa o modo Elite Rocket.
+   */
+  activateEliteMode(): boolean {
+      if (this.eliteCooldown <= 0 && !this.eliteMode) {
+          this.eliteMode = true;
+          this.eliteTimer = this.eliteDuration;
+          this.eliteCooldown = 30.0; // 30s cooldown
+          this.originalSpeed = this.speed;
+          this.speed = 800; // Super velocidade
+          this.invulnerableTimer = 5.0; // Invulnerável durante o dash
+          return true;
+      }
+      return false;
+  }
+
   update(deltaTime: number) {
+    // Gerenciamento Elite Mode
+    if (this.eliteMode) {
+        this.eliteTimer -= deltaTime;
+        
+        // Spawn de partículas de fumaça/fogo é feito no GameEngine ou aqui se tiver acesso
+        // Como não tenho acesso ao engine aqui facilmente sem passar como argumento,
+        // o efeito visual será tratado no draw ou no engine.
+        
+        if (this.eliteTimer <= 0) {
+            this.eliteMode = false;
+            this.speed = this.originalSpeed; // Restaura velocidade
+            this.invulnerableTimer = 0;
+        }
+    }
+    if (this.eliteCooldown > 0) {
+        this.eliteCooldown -= deltaTime;
+    }
+
+    // Gerenciamento do Escudo
+    if (this.shieldActive) {
+        this.shieldTimer -= deltaTime;
+        if (this.shieldTimer <= 0) {
+            this.shieldActive = false;
+        }
+    }
+
+    if (this.shieldCooldownTimer > 0) {
+        this.shieldCooldownTimer -= deltaTime;
+    }
+
     if (this.invulnerableTimer > 0) {
       this.invulnerableTimer -= deltaTime;
     }
@@ -113,8 +186,92 @@ export class Player extends GameObject {
     });
 
     // Efeito visual de piscar quando invulnerável
-    if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0) {
+    if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0 && !this.eliteMode) {
       return;
+    }
+
+    // Desenho do ELITE ROCKET
+    if (this.eliteMode) {
+        ctx.save();
+        ctx.translate(this.position.x, this.position.y);
+        
+        // Rotação baseada na velocidade
+        const angle = Math.atan2(this.velocity.y, this.velocity.x);
+        ctx.rotate(angle + Math.PI / 2);
+        
+        ctx.globalCompositeOperation = 'lighter';
+        
+        // Fogo do motor
+        const flameSize = Math.random() * 20 + 20;
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath();
+        ctx.moveTo(-5, 10);
+        ctx.lineTo(0, 10 + flameSize);
+        ctx.lineTo(5, 10);
+        ctx.fill();
+
+        // Corpo do Foguete Elite
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 10, 25, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Detalhes Neon
+        ctx.fillStyle = '#00ffff'; // Cyan Neon
+        ctx.fillRect(-3, -15, 6, 30);
+        
+        // Asas
+        ctx.beginPath();
+        ctx.moveTo(0, 5);
+        ctx.lineTo(-15, 25);
+        ctx.lineTo(-5, 25);
+        ctx.lineTo(0, 15);
+        ctx.lineTo(5, 25);
+        ctx.lineTo(15, 25);
+        ctx.lineTo(0, 5);
+        ctx.fillStyle = '#00ffff';
+        ctx.fill();
+
+        ctx.restore();
+        
+        // Desenha a Barra de Vida Flutuante
+        this.drawHealthBar(ctx);
+        return; // Não desenha o corpo normal
+    }
+
+    // Aura de Escudo (Cyberpunk Neon)
+    if (this.shieldActive) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        
+        // Efeito de pulso
+        const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+        
+        // Aura Externa
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius * 2 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.2)'; // Cyan Neon Transparente
+        ctx.fill();
+        
+        // Borda de Energia
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Partículas Orbitais (Simuladas visualmente)
+        const time = Date.now() * 0.005;
+        for (let i = 0; i < 3; i++) {
+            const angle = time + (i * (Math.PI * 2) / 3);
+            const ox = this.position.x + Math.cos(angle) * (this.radius * 2);
+            const oy = this.position.y + Math.sin(angle) * (this.radius * 2);
+            
+            ctx.beginPath();
+            ctx.arc(ox, oy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+        }
+        
+        ctx.restore();
     }
 
     // Desenha o corpo do jogador com brilho (Shadow Blur)

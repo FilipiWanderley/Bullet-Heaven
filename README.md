@@ -115,3 +115,23 @@ Foco total em eliminar travamentos ("stutter") e garantir 60 FPS estáveis mesmo
 - **Additive Blending**: Substituição do custoso `ctx.shadowBlur` (CPU-bound) por `ctx.globalCompositeOperation = 'lighter'` (GPU-bound).
   - O efeito de brilho neon agora é "gratuito" para o processador, permitindo mais partículas sem queda de FPS.
 - **Particle Budgeting**: Ajuste inteligente na taxa de emissão de partículas para manter o impacto visual com metade do custo computacional.
+
+<!-- v1.4 Update -->
+
+## 🚀 Novidades da v1.4 - Elite Mobility & Atmosphere
+
+Uma atualização focada em imersão atmosférica e mobilidade extrema para o jogador.
+
+### 🌌 Imersão Visual (Background System)
+- **Parallax Scrolling**: Implementação de um fundo estelar com 3 camadas de profundidade que se movem em velocidades diferentes, criando uma sensação real de 3D.
+- **Nebulosas Procedurais**: Nuvens de gás neon (Magenta, Ciano, Roxo) geradas dinamicamente.
+- **Meteoros Dinâmicos**: Eventos aleatórios de meteoros cruzando o horizonte.
+
+### 🏎️ Mobilidade e Habilidades
+- **Elite Rocket Mode (SHIFT)**: Transformação temporária que triplica a velocidade (800px/s) e garante invulnerabilidade.
+  - Efeitos visuais de "Warp Speed" (Linhas de velocidade e distorção de borda).
+- **Escudo Cibernético (ESPAÇO)**: Habilidade defensiva que protege contra danos por 5 segundos.
+
+### 🤖 Novos Desafios
+- **Rocket Enemies**: Inimigos rápidos que perseguem o jogador (Homing Behavior) e explodem com ondas de choque ao morrer.
+- **Feedback de Dano Aprimorado**: Screen Shake direcional e efeitos de flash vermelho aprimorados.
