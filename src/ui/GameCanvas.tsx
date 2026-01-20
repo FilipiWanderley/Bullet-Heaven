@@ -6,6 +6,7 @@ import { StartScreen } from './StartScreen';
 import { TutorialModal } from './TutorialModal';
 import { HUD } from './HUD';
 import { VirtualJoystick } from './VirtualJoystick';
+import { MobileControls } from './MobileControls';
 import type { GameState } from '../types';
 
 export const GameCanvas = () => {
@@ -120,7 +121,7 @@ export const GameCanvas = () => {
   const frameCountRef = useRef(0);
 
   // Callback chamado a cada frame pelo Game Loop
-  const handleFrame = () => {
+  const handleFrame = React.useCallback(() => {
     if (!engine) return;
 
     // Sincroniza estado do jogo com React se necessário
@@ -160,7 +161,7 @@ export const GameCanvas = () => {
         debugInfo: `Enemies: ${engine.enemies.length} | Proj: ${engine.activeProjectiles.length} | State: ${engine.gameState}`
       });
     }
-  };
+  }, [engine, gameState, hudState]);
 
   // Hook do Game Loop
   useGameLoop(engine, canvasRef, handleFrame);
@@ -216,7 +217,10 @@ export const GameCanvas = () => {
       
       {/* Joystick Virtual (Mobile Only - controlado via CSS/Media Query no componente) */}
       {(gameState === 'playing' || gameState === 'boss_fight') && (
-        <VirtualJoystick onMove={handleJoystickMove} />
+        <>
+          <VirtualJoystick onMove={handleJoystickMove} />
+          <MobileControls engine={engine} />
+        </>
       )}
 
       {/* Camada de UI (Sobreposta) */}
@@ -245,6 +249,10 @@ export const GameCanvas = () => {
           maxXp={hudState.maxXp}
           hp={hudState.hp}
           maxHp={hudState.maxHp}
+          shieldCooldown={hudState.shieldCooldown}
+          shieldMaxCooldown={hudState.shieldMaxCooldown}
+          eliteCooldown={hudState.eliteCooldown}
+          eliteMaxCooldown={hudState.eliteMaxCooldown}
           boss={hudState.boss}
           debugInfo={hudState.debugInfo}
         />

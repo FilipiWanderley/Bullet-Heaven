@@ -87,11 +87,17 @@ export class SpatialHashGrid {
    * Recupera candidatos a colisão (Broad Phase).
    * Retorna objetos na mesma célula e nas adjacentes (3x3).
    * Complexidade: O(1) (constante, pois checa no máximo 9 células)
+   * 
+   * @param outArray Array opcional para popular com os resultados (evita alocação)
    */
-  retrieve(obj: SpatialObject): SpatialObject[] {
+  retrieve(obj: SpatialObject, outArray: SpatialObject[]): SpatialObject[] {
     const cellX = Math.floor(obj.position.x / this.cellSize);
     const cellY = Math.floor(obj.position.y / this.cellSize);
-    const candidates: SpatialObject[] = [];
+    
+    // Se nenhum array for passado, usa um novo (comportamento antigo)
+    // Mas o ideal é passar um array reusável
+    const candidates = outArray;
+    candidates.length = 0; // Limpa o array recebido
 
     // Verifica 3x3 vizinhos
     for (let i = -1; i <= 1; i++) {

@@ -13,15 +13,36 @@ interface HUDProps {
     maxHp: number;
     name: string;
   } | null;
+  shieldCooldown: number;
+  shieldMaxCooldown: number;
+  eliteCooldown: number;
+  eliteMaxCooldown: number;
   debugInfo?: string;
 }
 
-export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp, maxHp, boss, debugInfo }) => {
+export const HUD: React.FC<HUDProps> = ({ 
+  score, 
+  highScore, 
+  level, 
+  xp, 
+  maxXp, 
+  hp, 
+  maxHp, 
+  boss, 
+  shieldCooldown,
+  shieldMaxCooldown,
+  eliteCooldown,
+  eliteMaxCooldown,
+  debugInfo 
+}) => {
   // Calcula a porcentagem de XP para a barra de progresso
   const xpPercentage = Math.min(100, Math.max(0, (xp / maxXp) * 100));
   // Calcula a porcentagem de HP
   const hpPercentage = Math.min(100, Math.max(0, (hp / maxHp) * 100));
   const isLowHp = hp > 0 && hpPercentage <= 25;
+  
+  const shieldPct = Math.max(0, (shieldCooldown / shieldMaxCooldown) * 100);
+  const elitePct = Math.max(0, (eliteCooldown / eliteMaxCooldown) * 100);
 
   return (
     <div className={`absolute inset-0 pointer-events-none p-4 md:p-6 flex flex-col justify-between${isLowHp ? ' ring-4 ring-red-500/70 animate-pulse' : ''}`}>
@@ -95,6 +116,33 @@ export const HUD: React.FC<HUDProps> = ({ score, highScore, level, xp, maxXp, hp
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Desktop Skills HUD (Hidden on Mobile) */}
+      <div className="absolute bottom-8 right-8 hidden md:flex gap-6 items-end">
+         {/* Shield Skill */}
+         <div className="relative flex flex-col items-center gap-2">
+           <span className="text-[10px] text-cyan-200/70 font-mono tracking-widest bg-black/40 px-2 py-0.5 rounded border border-cyan-500/20">E</span>
+           <div className={`w-14 h-14 rounded-xl bg-black/60 border-2 flex items-center justify-center relative overflow-hidden transition-colors duration-200 ${shieldPct > 0 ? 'border-cyan-900/50' : 'border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]'}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-7 h-7 transition-all duration-200 ${shieldPct > 0 ? 'text-cyan-800' : 'text-cyan-100'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              {/* Cooldown Overlay */}
+              <div className="absolute bottom-0 left-0 w-full bg-black/60 transition-all duration-100 ease-linear" style={{ height: `${shieldPct}%` }} />
+           </div>
+         </div>
+
+         {/* Elite Skill */}
+         <div className="relative flex flex-col items-center gap-2">
+           <span className="text-[10px] text-orange-200/70 font-mono tracking-widest bg-black/40 px-2 py-0.5 rounded border border-orange-500/20">R</span>
+           <div className={`w-14 h-14 rounded-xl bg-black/60 border-2 flex items-center justify-center relative overflow-hidden transition-colors duration-200 ${elitePct > 0 ? 'border-orange-900/50' : 'border-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]'}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-7 h-7 transition-all duration-200 ${elitePct > 0 ? 'text-orange-800' : 'text-orange-100'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+              {/* Cooldown Overlay */}
+              <div className="absolute bottom-0 left-0 w-full bg-black/60 transition-all duration-100 ease-linear" style={{ height: `${elitePct}%` }} />
+           </div>
+         </div>
       </div>
 
       {debugInfo && (

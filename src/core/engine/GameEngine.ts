@@ -102,16 +102,16 @@ export class GameEngine {
       if (e.code === 'KeyB') this.spawnBoss();
       if (e.code === 'KeyR' && this.gameState === 'gameover') this.startGame();
       
-      // Habilidade: Escudo (Espaço)
-      if (e.code === 'Space') {
+      // Habilidade: Escudo (Tecla E ou Espaço)
+      if (e.code === 'KeyE' || e.code === 'Space') {
         if (this.player.activateShield()) {
             AudioManager.getInstance().playPowerUp(); // Som de ativação
             this.spawnNeonExplosion(this.player.position, 20); // Efeito visual extra
         }
       }
 
-      // Habilidade: Elite Rocket (Shift)
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      // Habilidade: Elite Rocket (Tecla R ou Shift)
+      if (e.code === 'KeyR' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
           if (this.player.activateEliteMode()) {
               AudioManager.getInstance().playPowerUp();
               this.screenShake = 15; // Impacto visual
@@ -379,75 +379,86 @@ export class GameEngine {
         this.boss.update(deltaTime, this.player, this);
     }
 
-    // Atualização de Entidades (Inimigos)
-    this.activeParticles = this.activeParticles.filter(p => {
-      p.update(deltaTime);
-      if (p.life <= 0) {
-        this.particlePool.release(p);
-        return false;
-      }
-      return true;
-    });
+    // Optimization: Use reverse loop with splice instead of filter to reduce GC
+    // Atualização de Partículas
+    for (let i = this.activeParticles.length - 1; i >= 0; i--) {
+        const p = this.activeParticles[i];
+        p.update(deltaTime);
+        if (p.life <= 0) {
+            this.particlePool.release(p);
+            this.activeParticles.splice(i, 1);
+        }
+    }
 
-    this.activeProjectiles = this.activeProjectiles.filter(p => {
-      p.update(deltaTime);
-      if (p instanceof RocketProjectile) {
-        p.spawnTrail(this);
-      }
-      if (p.isDead) {
+    // Atualização de Projéteis
+    for (let i = this.activeProjectiles.length - 1; i >= 0; i--) {
+        const p = this.activeProjectiles[i];
+        p.update(deltaTime);
+        
         if (p instanceof RocketProjectile) {
-          this.rocketPool.release(p);
-        } else {
-          this.projectilePool.release(p);
+            p.spawnTrail(this);
         }
-        return false;
-      }
-      return true;
-    });
 
-    this.enemies = this.enemies.filter(e => {
-      e.update(deltaTime, this.player, this);
-      if (e instanceof RocketEnemy) {
-        e.spawnTrail(this);
-      }
-      if (e.isDead) {
+        if (p.isDead) {
+            if (p instanceof RocketProjectile) {
+                this.rocketPool.release(p);
+            } else {
+                this.projectilePool.release(p);
+            }
+            this.activeProjectiles.splice(i, 1);
+        }
+    }
+
+    // Atualização de Inimigos
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+        const e = this.enemies[i];
+        e.update(deltaTime, this.player, this);
         if (e instanceof RocketEnemy) {
-            this.rocketEnemyPool.release(e);
-        } else {
-            this.enemyPool.release(e);
+            e.spawnTrail(this);
         }
-        return false;
-      }
-      return true;
-    });
+        if (e.isDead) {
+            if (e instanceof RocketEnemy) {
+                this.rocketEnemyPool.release(e);
+            } else {
+                this.enemyPool.release(e);
+            }
+            this.enemies.splice(i, 1);
+        }
+    }
 
-    // Update Floating Texts
-    this.activeTexts = this.activeTexts.filter(t => {
-      t.update(deltaTime);
-      if (t.isDead) {
-        this.textPool.release(t);
-        return false;
-      }
-      return true;
-    });
-    
-    this.powerUps = this.powerUps.filter(p => {
-      if (this.player.magnetActive && p.type === 'xp') {
-        const dx = this.player.position.x - p.position.x;
-        const dy = this.player.position.y - p.position.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 0 && dist < 250) {
-          const speed = 200;
-          const nx = dx / dist;
-          const ny = dy / dist;
-          p.position.x += nx * speed * deltaTime;
-          p.position.y += ny * speed * deltaTime;
+    // Atualização de Textos Flutuantes
+    for (let i = this.activeTexts.length - 1; i >= 0; i--) {
+        const t = this.activeTexts[i];
+        t.update(deltaTime);
+        if (t.isDead) {
+            this.textPool.release(t);
+            this.activeTexts.splice(i, 1);
         }
-      }
-      p.update(deltaTime);
-      if (p.lifeTime <= 0) return false;
-      return !p.collected;
-    });
+    }
+
+    // Atualização de PowerUps
+    for (let i = this.powerUps.length - 1; i >= 0; i--) {
+        const p = this.powerUps[i];
+        if (this.player.magnetActive && p.type === 'xp') {
+            const dx = this.player.position.x - p.position.x;
+            const dy = this.player.position.y - p.position.y;
+            const distSq = dx * dx + dy * dy;
+            const magnetRadius = 250;
+            
+            if (distSq > 0 && distSq < magnetRadius * magnetRadius) {
+                const dist = Math.sqrt(distSq); // Only calc sqrt if within range
+                const speed = 200;
+                const nx = dx / dist;
+                const ny = dy / dist;
+                p.position.x += nx * speed * deltaTime;
+                p.position.y += ny * speed * deltaTime;
+            }
+        }
+        p.update(deltaTime);
+        if (p.lifeTime <= 0 || p.collected) {
+            this.powerUps.splice(i, 1);
+        }
+    }
 
     // Detecção de Colisões
     this.checkCollisions();
@@ -483,64 +494,85 @@ export class GameEngine {
   checkCollisions() {
     // 1. Popula a grade espacial
     this.grid.clear();
-    this.enemies.forEach(e => this.grid.insert(e));
+    // Use for loop to avoid callback allocation
+    for (let i = 0; i < this.enemies.length; i++) {
+        this.grid.insert(this.enemies[i]);
+    }
     if (this.boss && !this.boss.isDead) this.grid.insert(this.boss);
 
     // 2. Projéteis vs Inimigos/Boss
-    this.activeProjectiles.forEach(proj => {
-      const nearbyEnemies = this.grid.retrieve(proj) as Enemy[];
+    // Use for loop to avoid callback allocation
+    for (let i = 0; i < this.activeProjectiles.length; i++) {
+        const proj = this.activeProjectiles[i];
+        const nearbyEnemies = this.grid.retrieve(proj) as Enemy[];
       
-      for (const enemy of nearbyEnemies) {
-        if (enemy.isDead) continue;
+        for (let j = 0; j < nearbyEnemies.length; j++) {
+            const enemy = nearbyEnemies[j];
+            if (enemy.isDead) continue;
 
-        const dist = Vector2.distance(proj.position, enemy.position);
-        if (dist < enemy.radius + proj.radius) {
-          enemy.takeDamage(10);
-          
-          // Spawn Floating Text
-          const text = this.textPool.get(enemy.position.x, enemy.position.y - 20, "10", "#fff");
-          this.activeTexts.push(text);
+            const dx = proj.position.x - enemy.position.x;
+            const dy = proj.position.y - enemy.position.y;
+            const distSq = dx * dx + dy * dy;
+            const radiusSum = enemy.radius + proj.radius;
 
-          proj.isDead = true;
-          
-          this.spawnParticles(enemy.position, 5, enemy.color);
-          
-          if (enemy.isDead) {
-            this.handleEnemyDeath(enemy);
-          }
-          break; // Um projétil atinge apenas um inimigo
+            if (distSq < radiusSum * radiusSum) {
+                enemy.takeDamage(10);
+                
+                // Spawn Floating Text
+                const text = this.textPool.get(enemy.position.x, enemy.position.y - 20, "10", "#fff");
+                this.activeTexts.push(text);
+
+                proj.isDead = true;
+                
+                this.spawnParticles(enemy.position, 5, enemy.color);
+                
+                if (enemy.isDead) {
+                    this.handleEnemyDeath(enemy);
+                }
+                break; // Um projétil atinge apenas um inimigo
+            }
         }
-      }
-    });
+    }
 
     // 3. Player vs Inimigos/Boss
     const nearbyToPlayer = this.grid.retrieve(this.player) as Enemy[];
-    for (const enemy of nearbyToPlayer) {
-      if (enemy.isDead) continue;
+    for (let i = 0; i < nearbyToPlayer.length; i++) {
+        const enemy = nearbyToPlayer[i];
+        if (enemy.isDead) continue;
 
-      const dist = Vector2.distance(this.player.position, enemy.position);
-      if (dist < this.player.radius + enemy.radius) {
-        if (this.player.invulnerableTimer <= 0) {
-            this.player.takeDamage(10);
-            AudioManager.getInstance().playPlayerDamage();
-            this.screenShake = 25; // Aumentado para 25 para ser "intenso"
-            this.damageFlashTimer = 0.5; // Inicia flash de 0.5s
-            
-            if (this.player.hp <= 0) {
-                this.gameState = 'gameover';
-                this.saveHighScore();
-                this.screenShake = 30;
-                AudioManager.getInstance().playExplosion();
+        const dx = this.player.position.x - enemy.position.x;
+        const dy = this.player.position.y - enemy.position.y;
+        const distSq = dx * dx + dy * dy;
+        const radiusSum = this.player.radius + enemy.radius;
+
+        if (distSq < radiusSum * radiusSum) {
+            if (this.player.invulnerableTimer <= 0) {
+                this.player.takeDamage(10);
+                AudioManager.getInstance().playPlayerDamage();
+                this.screenShake = 25; // Aumentado para 25 para ser "intenso"
+                this.damageFlashTimer = 0.5; // Inicia flash de 0.5s
+                
+                if (this.player.hp <= 0) {
+                    this.gameState = 'gameover';
+                    this.saveHighScore();
+                    this.screenShake = 30;
+                    AudioManager.getInstance().playExplosion();
+                }
             }
         }
-      }
     }
 
     // 4. Player vs PowerUps
-    this.powerUps.forEach(p => {
-        if (p.collected) return;
-        const dist = Vector2.distance(this.player.position, p.position);
-        if (dist < this.player.radius + p.radius) {
+    for (let i = 0; i < this.powerUps.length; i++) {
+        const p = this.powerUps[i];
+        if (p.collected) continue;
+
+        const dx = this.player.position.x - p.position.x;
+        const dy = this.player.position.y - p.position.y;
+        const distSq = dx * dx + dy * dy;
+        const radiusSum = this.player.radius + p.radius;
+
+        if (distSq < radiusSum * radiusSum) {
             p.collected = true;
             const prevLevel = this.player.level;
             p.effect(this.player);
@@ -553,7 +585,7 @@ export class GameEngine {
 
             AudioManager.getInstance().playPowerUp();
         }
-    });
+    }
   }
 
   handleEnemyDeath(enemy: Enemy) {

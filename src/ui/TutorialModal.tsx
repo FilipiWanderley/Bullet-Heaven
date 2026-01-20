@@ -16,7 +16,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onConfirm }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
             {/* Movimento */}
-            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-cyan-500/50 transition-colors">
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-cyan-500/50 transition-colors h-full">
               <div className="text-5xl mb-2">🕹️</div>
               <h3 className="text-xl font-bold text-white uppercase tracking-wider">Movimentação</h3>
               <div className="flex gap-2 justify-center font-mono text-sm text-gray-400 flex-wrap">
@@ -29,7 +29,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onConfirm }) => {
             </div>
 
             {/* Combate */}
-            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-red-500/50 transition-colors">
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-red-500/50 transition-colors h-full">
               <div className="text-5xl mb-2">🎯</div>
               <h3 className="text-xl font-bold text-white uppercase tracking-wider">Combate</h3>
               <div className="flex gap-2 justify-center font-mono text-sm text-gray-400 flex-wrap">
@@ -42,7 +42,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onConfirm }) => {
             </div>
 
             {/* Objetivo */}
-            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-yellow-500/50 transition-colors">
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-yellow-500/50 transition-colors h-full">
               <div className="text-5xl mb-2">⚡</div>
               <h3 className="text-xl font-bold text-white uppercase tracking-wider">Sobrevivência</h3>
               <div className="flex gap-2 justify-center font-mono text-sm text-gray-400">
@@ -51,6 +51,44 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ onConfirm }) => {
               </div>
               <p className="text-sm text-gray-300 leading-relaxed">
                 Elimine inimigos para coletar XP e Power-ups. Sobreviva até o Boss aparecer.
+              </p>
+            </div>
+
+            {/* Escudo de Proteção */}
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-blue-500/50 transition-colors h-full">
+              <div className="text-5xl mb-2">🛡️</div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider">Escudo</h3>
+              <div className="flex gap-2 justify-center font-mono text-sm text-gray-400 flex-wrap">
+                <span className="px-2 py-1 border border-gray-600 rounded">TECLA E</span>
+                <span className="px-2 py-1 border border-cyan-500/50 text-cyan-400 rounded">ÍCONE</span>
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Invulnerabilidade por 5s. Use contra Bosses ou quando cercado.
+              </p>
+            </div>
+
+            {/* Foguete de Elite */}
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-orange-500/50 transition-colors h-full">
+              <div className="text-5xl mb-2">🚀</div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider">Elite Rocket</h3>
+              <div className="flex gap-2 justify-center font-mono text-sm text-gray-400 flex-wrap">
+                <span className="px-2 py-1 border border-gray-600 rounded">TECLA R</span>
+                <span className="px-2 py-1 border border-cyan-500/50 text-cyan-400 rounded">ÍCONE</span>
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Transformação por 5s: +Velocidade e +Ataque. Ideal para fugas rápidas.
+              </p>
+            </div>
+
+            {/* Fundo Espacial */}
+            <div className="flex flex-col items-center text-center space-y-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-purple-500/50 transition-colors h-full">
+              <div className="text-5xl mb-2">🌌</div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider">Espaço</h3>
+              <div className="flex gap-2 justify-center font-mono text-sm text-gray-400">
+                <span className="px-2 py-1 border border-gray-600 rounded">CÓSMICO</span>
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Ambiente espacial dinâmico. Fique atento a novos obstáculos do universo.
               </p>
             </div>
           </div>

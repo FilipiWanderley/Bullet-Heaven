@@ -98,6 +98,26 @@ Uma reformulação visual e de gameplay focada em "Game Juice" e estética Neon.
 - **Flash de Satisfação**: Efeito de flash branco aditivo ao coletar itens ou derrotar chefes, aumentando a recompensa sensorial.
 - **Post-Processing**: Vignette dinâmica e sobreposições de cor para feedback de dano (Flash Vermelho).
 
+## 📱 Atualizações Cross-Platform (v1.3 - Mobile & Responsividade)
+
+Focada em garantir uma experiência consistente e fluida em qualquer dispositivo (Notebook, iPad, Mobile).
+
+### 🕹️ Controles Adaptativos
+- **Notebook/Desktop**: WASD para movimento, Mouse para mira, Teclas E (Escudo) e R (Elite).
+- **Mobile/Tablet**:
+  - **Joystick Virtual**: Movimentação suave com detecção de toque.
+  - **Botões de Ação**: Botões dedicados para Escudo e Elite Rocket com feedback visual de recarga (cooldown).
+  - **Toque para Atirar**: Mira e disparo intuitivos via toque na tela.
+
+### 🛡️ Novas Mecânicas & Feedback
+- **Escudo de Proteção (Tecla E / Ícone)**: Invulnerabilidade temporária com aura neon visual e indicador de cooldown.
+- **Elite Rocket (Tecla R / Ícone)**: Transformação temporária que aumenta velocidade e poder de fogo.
+- **Interface (HUD) Responsiva**: Elementos de UI reposicionados dinamicamente para garantir visibilidade e ergonomia em telas menores.
+
+### ⚡ Otimização de Performance
+- **Object Pooling Aprimorado**: Garantia de 60 FPS estáveis em dispositivos móveis.
+- **Renderização Condicional**: Elementos de UI complexos simplificados ou ocultados em mobile para maximizar a área de jogo.
+
 <!-- v1.3 Update -->
 
 ## ⚡ Atualização de Performance (v1.3 - Extreme Optimization)

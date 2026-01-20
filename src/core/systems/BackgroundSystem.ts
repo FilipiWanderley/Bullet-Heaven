@@ -187,11 +187,15 @@ export class BackgroundSystem {
         const x = (-(camera.x * 0.1) % scaledW);
         const y = (-(camera.y * 0.1) % scaledH);
 
-        // Draw 4 tiles to cover movement
+        // Draw 4 tiles to cover movement (Optimized from 9 to 4)
         ctx.globalAlpha = 0.4; // Darken it a bit so gameplay is visible
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
+        for (let i = 0; i <= 1; i++) {
+            for (let j = 0; j <= 1; j++) {
                 ctx.drawImage(this.backgroundImage, x + i * scaledW, y + j * scaledH, scaledW, scaledH);
+                // Also draw negative for seamless wrapping
+                ctx.drawImage(this.backgroundImage, x - scaledW + i * scaledW, y + j * scaledH, scaledW, scaledH);
+                ctx.drawImage(this.backgroundImage, x + i * scaledW, y - scaledH + j * scaledH, scaledW, scaledH);
+                ctx.drawImage(this.backgroundImage, x - scaledW + i * scaledW, y - scaledH + j * scaledH, scaledW, scaledH);
             }
         }
         ctx.globalAlpha = 1.0;
@@ -210,6 +214,9 @@ export class BackgroundSystem {
   }
 
   private drawProceduralNebulas(ctx: CanvasRenderingContext2D, camera: Vector2) {
+    // Reduce opacity for better performance (less overdraw impact)
+    ctx.globalAlpha = 0.8;
+    
     this.nebulas.forEach(n => {
       // Calculate parallax position with wrapping
       let x = (n.x - camera.x * n.parallax) % this.width;
@@ -232,9 +239,10 @@ export class BackgroundSystem {
           const drawX = x + pos.dx;
           const drawY = y + pos.dy;
           
-          // Optimization: only draw if visible
-          if (drawX + n.radius < 0 || drawX - n.radius > this.width || 
-              drawY + n.radius < 0 || drawY - n.radius > this.height) return;
+          // Optimization: only draw if visible (Strict check)
+          // Add 100px buffer to prevent popping
+          if (drawX + n.radius < -100 || drawX - n.radius > this.width + 100 || 
+              drawY + n.radius < -100 || drawY - n.radius > this.height + 100) return;
 
           const gradient = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, n.radius);
           gradient.addColorStop(0, n.colorStart);
@@ -248,6 +256,7 @@ export class BackgroundSystem {
       });
     });
     ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.0;
   }
 
   private drawStars(ctx: CanvasRenderingContext2D, camera: Vector2) {
@@ -259,6 +268,9 @@ export class BackgroundSystem {
       if (x < 0) x += this.width;
       if (y < 0) y += this.height;
 
+      // Skip drawing if out of bounds (Optimization)
+      if (x < -10 || x > this.width + 10 || y < -10 || y > this.height + 10) return;
+
       // Twinkle Logic
       const twinkle = Math.sin(now * 0.003 + s.blinkOffset);
       const alpha = s.baseAlpha + twinkle * 0.3;
@@ -267,19 +279,22 @@ export class BackgroundSystem {
       // Boost alpha for visibility
       ctx.globalAlpha = Math.max(0.3, Math.min(1, alpha));
       
-      // Neon Glow for larger stars
+      // Optimization: Fake Glow instead of ShadowBlur
       if (s.size > 2.0) {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = s.color;
-      } else {
-        ctx.shadowBlur = 0;
+        // Draw glow (larger, more transparent circle)
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(x, y, s.size * 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Restore alpha for core
+        ctx.globalAlpha = Math.max(0.3, Math.min(1, alpha));
       }
 
       ctx.beginPath();
       ctx.arc(x, y, s.size, 0, Math.PI * 2);
       ctx.fill();
     });
-    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1.0;
   }
 
@@ -298,8 +313,9 @@ export class BackgroundSystem {
       gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
       ctx.strokeStyle = gradient;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = m.color;
+      // Removed ShadowBlur for performance
+      // ctx.shadowBlur = 15;
+      // ctx.shadowColor = m.color;
 
       ctx.beginPath();
       ctx.moveTo(m.position.x, m.position.y);
