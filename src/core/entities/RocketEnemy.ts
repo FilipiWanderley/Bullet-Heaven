@@ -86,7 +86,8 @@ export class RocketEnemy extends Enemy {
     const backX = this.position.x - Math.cos(angle) * 15;
     const backY = this.position.y - Math.sin(angle) * 15;
 
-    if (Math.random() < 0.4) {
+    // OTIMIZAÇÃO: Reduzir frequência (0.4 -> 0.2)
+    if (Math.random() < 0.2) {
         // Fogo/Rastro
         const p = engine.particlePool.get(backX, backY, this.color); // Rastro da cor do inimigo
         p.velocity = this.velocity.scale(-0.2).add(new Vector2((Math.random()-0.5)*30, (Math.random()-0.5)*30));
@@ -95,7 +96,8 @@ export class RocketEnemy extends Enemy {
         engine.activeParticles.push(p);
     }
     
-    if (Math.random() < 0.2) {
+    // OTIMIZAÇÃO: Reduzir frequência (0.2 -> 0.1)
+    if (Math.random() < 0.1) {
         // Fumaça escura
         const p = engine.particlePool.get(backX, backY, '#222222');
         p.velocity = this.velocity.scale(-0.1);
@@ -118,12 +120,13 @@ export class RocketEnemy extends Enemy {
     // Feedback de dano
     if (this.flashTimer > 0) {
         ctx.fillStyle = 'white';
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = 'white';
+        // OTIMIZAÇÃO: Remover shadowBlur
+        ctx.globalCompositeOperation = 'lighter'; 
     } else {
         ctx.fillStyle = '#222'; // Corpo escuro para contraste neon
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = this.color;
+        // OTIMIZAÇÃO: Remover shadowBlur
+        // ctx.shadowBlur = 15;
+        // ctx.shadowColor = this.color;
     }
 
     // Desenho do Foguete Inimigo (Mais agressivo/afiado)
@@ -136,15 +139,33 @@ export class RocketEnemy extends Enemy {
     ctx.closePath();
     ctx.fill();
     
-    // Contorno Neon
-    ctx.strokeStyle = this.flashTimer > 0 ? 'white' : this.color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Contorno Neon (Agora usando lighter se não estiver em flash)
+    if (this.flashTimer <= 0) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Glow falso
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    } else {
+        // Se estiver em flash, contorno branco
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
 
     // Engine Glow
     ctx.beginPath();
     ctx.arc(0, 8, 3, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = this.flashTimer > 0 ? 'white' : this.color;
+    if (this.flashTimer <= 0) ctx.globalCompositeOperation = 'lighter';
     ctx.fill();
 
     ctx.restore();

@@ -67,18 +67,22 @@ export class Particle extends GameObject implements Poolable {
     
     // Flicker effect
     if (this.flicker) {
-        alpha *= (0.7 + Math.random() * 0.3); // Random flicker between 70% and 100%
+        alpha *= (0.7 + Math.random() * 0.3); 
     }
 
     ctx.globalAlpha = alpha;
     
+    // OTIMIZAÇÃO: Usar 'lighter' (Additive Blending) em vez de ShadowBlur
+    // ShadowBlur é muito custoso para CPU. 'lighter' dá o efeito neon de graça na GPU.
+    const prevComposite = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'lighter';
+
     if (this.type === 'shockwave') {
         ctx.beginPath();
         ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
         ctx.strokeStyle = this.color;
-        ctx.lineWidth = 5 * this.life; // Fica mais fino conforme some
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = this.color;
+        ctx.lineWidth = 5 * this.life;
+        // Removido ShadowBlur custoso
         ctx.stroke();
         ctx.closePath();
     } else {
@@ -87,18 +91,26 @@ export class Particle extends GameObject implements Poolable {
         // Shimmer size change
         const currentRadius = this.flicker ? this.radius * (0.9 + Math.random() * 0.2) : this.radius;
 
+        // Desenha o "núcleo" brilhante
         ctx.arc(this.position.x, this.position.y, currentRadius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
-        
-        // Brilho Neon (Shadow Blur pode ser custoso, usar com parcimônia)
-        ctx.shadowBlur = this.flicker ? 15 : 10;
-        ctx.shadowColor = this.color;
-        
         ctx.fill();
         ctx.closePath();
+        
+        // Opcional: Desenhar um segundo círculo maior e mais transparente para simular o glow
+        // Isso é mais rápido que shadowBlur
+        if (this.flicker) {
+            ctx.beginPath();
+            ctx.arc(this.position.x, this.position.y, currentRadius * 2, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = alpha * 0.3;
+            ctx.fill();
+            ctx.closePath();
+        }
     }
     
-    ctx.shadowBlur = 0;
+    // Restaura estado
+    ctx.globalCompositeOperation = prevComposite;
     ctx.globalAlpha = 1.0;
   }
 }

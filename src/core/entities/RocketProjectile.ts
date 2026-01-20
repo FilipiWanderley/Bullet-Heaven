@@ -29,14 +29,17 @@ export class RocketProjectile extends Projectile {
 
   // Method to spawn trail particles
   spawnTrail(engine: GameEngine) {
-    // Spawn smoke/fire at the back
+    // OTIMIZAÇÃO: Reduzir frequência de emissão
+    // Antes: 0.6 (60%) e 0.4 (40%) = ~1 partícula por frame por foguete
+    // Agora: 0.3 (30%) e 0.2 (20%) = ~0.5 partícula por frame (metade da carga)
+    
     const angle = Math.atan2(this.velocity.y, this.velocity.x);
     // Offset para a cauda do foguete
     const backX = this.position.x - Math.cos(angle) * 15;
     const backY = this.position.y - Math.sin(angle) * 15;
     
     // Neon Smoke Trail (Blue/Purple/Cyan mix)
-    if (Math.random() < 0.6) {
+    if (Math.random() < 0.3) {
       const colors = ['#00ffff', '#bd00ff', '#00ffaa'];
       const color = colors[Math.floor(Math.random() * colors.length)];
       
@@ -44,16 +47,16 @@ export class RocketProjectile extends Projectile {
       
       // Velocidade oposta ao foguete + dispersão aleatória
       p.velocity = this.velocity.scale(-0.1).add(new Vector2((Math.random()-0.5)*20, (Math.random()-0.5)*20));
-      p.life = 0.6; // Rastro dura um pouco
-      p.radius = Math.random() * 4 + 2;
+      p.life = 0.5; // Vida mais curta para não acumular
+      p.radius = Math.random() * 3 + 1; // Levemente menor
       engine.activeParticles.push(p);
     }
     
     // Core Engine Flame (White/Yellow center)
-    if (Math.random() < 0.4) {
+    if (Math.random() < 0.2) {
       const p = engine.particlePool.get(backX, backY, '#ffffff');
       p.velocity = this.velocity.scale(-0.3); // Sai mais rápido para trás
-      p.life = 0.2; // Queima rápido
+      p.life = 0.15; // Queima rápido
       p.radius = Math.random() * 2 + 1;
       engine.activeParticles.push(p);
     }
@@ -67,14 +70,12 @@ export class RocketProjectile extends Projectile {
     
     // Rotate to face velocity
     const angle = Math.atan2(this.velocity.y, this.velocity.x);
-    // Remove wobble from rotation to ensure "straight line" visual stability, 
-    // but keep wobbleTimer for internal logic if needed (or remove it).
-    // User asked for "straight line" so visual stability is key.
     ctx.rotate(angle + Math.PI / 2); 
 
-    // Neon Glow
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = this.color;
+    // OTIMIZAÇÃO: Substituir ShadowBlur por Additive Blending
+    // ctx.shadowBlur = 20; // REMOVIDO
+    // ctx.shadowColor = this.color; // REMOVIDO
+    ctx.globalCompositeOperation = 'lighter'; // Efeito Neon Grátis
     
     // Main Body (Sleek Capsule)
     ctx.fillStyle = '#ffffff';
@@ -98,9 +99,12 @@ export class RocketProjectile extends Projectile {
     ctx.fillStyle = this.color;
     ctx.fill();
 
-    // Engine Nozzle
-    ctx.fillStyle = '#888888';
-    ctx.fillRect(-3, 10, 6, 4);
+    // Fake Glow (Círculo translúcido em volta)
+    ctx.beginPath();
+    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = 0.2;
+    ctx.fill();
 
     ctx.restore();
   }
