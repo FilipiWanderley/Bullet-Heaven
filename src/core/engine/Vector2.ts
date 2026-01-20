@@ -60,4 +60,14 @@ export class Vector2 {
   static distance(v1: Vector2, v2: Vector2): number {
     return v1.sub(v2).mag();
   }
+
+  /**
+   * Interpolação linear entre este vetor e outro.
+   * t é o fator de interpolação entre 0 e 1.
+   */
+  lerp(v: Vector2, t: number): Vector2 {
+    const x = this.x + (v.x - this.x) * t;
+    const y = this.y + (v.y - this.y) * t;
+    return new Vector2(x, y);
+  }
 }

@@ -84,3 +84,47 @@ export class OrbitalFireStrategy implements WeaponStrategy {
         AudioManager.getInstance().playShoot();
     }
 }
+
+/**
+ * Estratégia Rocket Launcher: Dispara um foguete poderoso.
+ */
+export class RocketLauncherStrategy implements WeaponStrategy {
+  shoot(player: Player, target: Vector2, engine: GameEngine): void {
+    const worldTarget = target.add(engine.camera);
+    let direction = worldTarget.sub(player.position).normalize();
+    
+    if (isNaN(direction.x) || isNaN(direction.y)) direction = new Vector2(1, 0);
+
+    const rocket = engine.rocketPool.get(player.position.x, player.position.y, direction);
+    engine.activeProjectiles.push(rocket);
+    AudioManager.getInstance().playShoot();
+  }
+}
+
+/**
+ * Estratégia Triple Rocket: Dispara 3 foguetes em leque (Shotgun Blast).
+ */
+export class TripleRocketStrategy implements WeaponStrategy {
+  shoot(player: Player, target: Vector2, engine: GameEngine): void {
+    const worldTarget = target.add(engine.camera);
+    let baseDir = worldTarget.sub(player.position).normalize();
+    
+    if (isNaN(baseDir.x) || isNaN(baseDir.y)) baseDir = new Vector2(1, 0);
+
+    // Spread mais largo que o tiro triplo normal (Shotgun feel)
+    const angles = [-0.3, 0, 0.3]; 
+
+    angles.forEach(angle => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const newX = baseDir.x * cos - baseDir.y * sin;
+      const newY = baseDir.x * sin + baseDir.y * cos;
+      
+      const dir = new Vector2(newX, newY);
+      
+      const rocket = engine.rocketPool.get(player.position.x, player.position.y, dir);
+      engine.activeProjectiles.push(rocket);
+    });
+    AudioManager.getInstance().playShoot();
+  }
+}

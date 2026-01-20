@@ -1,5 +1,6 @@
 import { GameObject } from './GameObject';
 import { Player } from './Player';
+import type { GameEngine } from '../engine/GameEngine';
 
 /**
  * Inimigo que persegue o jogador.
@@ -46,7 +47,8 @@ export class Enemy extends GameObject {
     this.color = colors[Math.floor(Math.random() * colors.length)];
   }
 
-  update(deltaTime: number, player?: Player) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  update(deltaTime: number, player?: Player, _engine?: GameEngine) {
     // Gerencia o efeito de flash branco
     if (this.flashTimer > 0) {
       this.flashTimer -= deltaTime;

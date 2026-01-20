@@ -87,3 +87,27 @@ Este projeto foi otimizado para o VS Code. Siga os passos abaixo:
 *Desenvolvido com paixão e rigor técnico por Filipi Moraes.*
 
 <!-- v1.1 Update -->
+
+## 🆕 Últimas Atualizações (v1.2 - Cyberpunk Overhaul)
+
+Uma reformulação visual e de gameplay focada em "Game Juice" e estética Neon.
+
+### 🌟 Efeitos Visuais e Feedback ("Juice")
+- **Partículas Neon**: Explosões multicoloridas (Ciano, Magenta, Lima) com efeitos de cintilação (`Flicker`) e brilho variável.
+- **Screen Shake & Glitch**: Sistema robusto de tremedeira de tela e distorção RGB (Aberração Cromática) para impactos críticos e Game Over.
+- **Flash de Satisfação**: Efeito de flash branco aditivo ao coletar itens ou derrotar chefes, aumentando a recompensa sensorial.
+- **Post-Processing**: Vignette dinâmica e sobreposições de cor para feedback de dano (Flash Vermelho).
+
+### 👹 Boss Battle System
+Implementação de um **Boss de Foguetes** complexo utilizando State Machine avançada:
+- **Fases de Combate**:
+  1. **Chase**: Perseguição agressiva.
+  2. **Rocket Barrage**: Disparo de múltiplos foguetes teleguiados.
+  3. **Slam Attack**: Ataque de área com onda de choque.
+- **Mecânica de Enrage**: Aumento de velocidade e agressividade abaixo de 50% de HP.
+
+### 🔫 Novas Estratégias de Armas
+- **Rocket Launcher**: Projéteis físicos com rastro de fumaça, aceleração e explosão em área.
+- **Triple Rocket**: Disparo em leque (Shotgun) com ícone personalizado e alto dano em área.
+- **Power-Up System**: Drop rate balanceado e feedback visual aprimorado na coleta.
+

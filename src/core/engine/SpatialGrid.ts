@@ -7,7 +7,7 @@ export interface SpatialObject {
   position: { x: number, y: number };
   radius: number;
   type?: string;
-  entity?: any; // Referência para a entidade real do jogo
+  entity?: unknown; // Referência para a entidade real do jogo
 }
 
 /**

@@ -52,5 +52,5 @@ export const useGameLoop = (
     return () => {
       cancelAnimationFrame(requestRef.current);
     };
-  }, [gameEngine, canvasRef]); // Recria o loop apenas se engine ou canvas mudarem
+  }, [gameEngine, canvasRef, onFrame]); // Recria o loop apenas se engine ou canvas mudarem
 };

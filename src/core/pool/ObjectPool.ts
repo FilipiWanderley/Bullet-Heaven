@@ -7,6 +7,7 @@
  * mantendo o consumo de memória estável e a performance fluida.
  */
 export interface Poolable {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reset(...args: any[]): void;
   active: boolean;
 }
@@ -26,6 +27,7 @@ export class ObjectPool<T extends Poolable> {
    * Obtém uma instância do pool ou cria uma nova se vazio.
    * Complexidade: O(1)
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get(...args: any[]): T {
     let item: T;
     if (this.pool.length > 0) {

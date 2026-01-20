@@ -26,7 +26,8 @@ export class AudioManager {
    */
   init() {
     if (!this.context) {
-      this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      this.context = new AudioContextClass();
       this.masterGain = this.context.createGain();
       this.masterGain.gain.value = 0.3; // Volume global
       this.masterGain.connect(this.context.destination);
@@ -87,6 +88,27 @@ export class AudioManager {
 
     osc.start(t);
     osc.stop(t + 0.3);
+  }
+
+  playBossSpawn() {
+    if (!this.context || !this.masterGain) return;
+    const t = this.context.currentTime;
+    
+    // Low frequency drone/warning
+    const osc = this.context.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(50, t);
+    osc.frequency.linearRampToValueAtTime(150, t + 2.0); // Pitch up
+
+    const gain = this.context.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(1, t + 0.5);
+    gain.gain.linearRampToValueAtTime(0, t + 2.0);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + 2.0);
   }
 
   playHeartbeat() {

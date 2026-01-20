@@ -14,30 +14,39 @@ export class PowerUpFactory {
   static createRandomDrop(x: number, y: number): PowerUp | null {
     const rand = Math.random();
 
-    // 5% de chance de Arma Especial (Triple Shot)
-    if (rand < 0.05) {
+    if (rand < 0.04) {
         return new PowerUp(x, y, 'weapon_triple', 0);
     }
 
-    // 5% de chance de Arma Especial (Orbital)
-    // Acumulado: 0.05 a 0.10
-    if (rand < 0.10) {
+    if (rand < 0.08) {
         return new PowerUp(x, y, 'weapon_orbital', 0);
     }
 
-    // 10% de chance de Health Pack (na prática aumenta vida ou XP se não tiver sistema de HP)
-    // Acumulado: 0.10 a 0.20
-    if (rand < 0.20) {
-      return new PowerUp(x, y, 'health', 20); // Cura 20 HP
+    if (rand < 0.12) {
+        return new PowerUp(x, y, 'weapon_triple_rocket', 0);
     }
     
-    // 20% de chance de XP Orb
-    // Acumulado: 0.20 a 0.40
-    if (rand < 0.40) {
-      return new PowerUp(x, y, 'xp', 10); // Dá 10 XP
+    if (rand < 0.30) {
+        return new PowerUp(x, y, 'weapon_rocket', 0);
     }
 
-    // 60% de chance de nada
+    if (rand < 0.45) {
+      return new PowerUp(x, y, 'health', 30);
+    }
+    
+    if (rand < 0.55) {
+      return new PowerUp(x, y, 'xp', 15);
+    }
+    if (rand < 0.60) {
+      return new PowerUp(x, y, 'speed', 0);
+    }
+    if (rand < 0.65) {
+      return new PowerUp(x, y, 'shield', 0);
+    }
+    if (rand < 0.70) {
+      return new PowerUp(x, y, 'magnet', 0);
+    }
+
     return null;
   }
   

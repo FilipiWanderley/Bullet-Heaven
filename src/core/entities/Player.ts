@@ -9,7 +9,7 @@ import { Vector2 } from '../engine/Vector2';
  * Gerencia vida, XP e mecânicas de nível.
  */
 export class Player extends GameObject {
-  speed: number = 300; // pixels por segundo
+  speed: number = 300;
   hp: number = 100;
   maxHp: number = 100;
   xp: number = 0;
@@ -17,6 +17,8 @@ export class Player extends GameObject {
   xpToNextLevel: number = 100;
   invulnerableTimer: number = 0;
   trail: { x: number, y: number, alpha: number }[] = [];
+  shieldActive: boolean = false;
+  magnetActive: boolean = false;
   
   // Strategy Pattern para armas
   weaponStrategy: WeaponStrategy;
@@ -42,7 +44,6 @@ export class Player extends GameObject {
 
 
   update(deltaTime: number) {
-    // Reduz o temporizador de invulnerabilidade se ativo
     if (this.invulnerableTimer > 0) {
       this.invulnerableTimer -= deltaTime;
     }
@@ -66,6 +67,7 @@ export class Player extends GameObject {
    * Aplica dano ao jogador respeitando o tempo de invulnerabilidade.
    */
   takeDamage(amount: number) {
+    if (this.shieldActive) return;
     if (this.invulnerableTimer > 0) return;
     this.hp -= amount;
     this.invulnerableTimer = 0.5; // 0.5s de invulnerabilidade pós-dano
