@@ -116,6 +116,9 @@ export const GameCanvas = () => {
     engine.spawnProjectile(new Vector2(x, y));
   };
 
+  // Atualiza HUD apenas a cada X frames para evitar re-renders excessivos
+  const frameCountRef = useRef(0);
+
   // Callback chamado a cada frame pelo Game Loop
   const handleFrame = () => {
     if (!engine) return;
@@ -125,13 +128,19 @@ export const GameCanvas = () => {
       setGameState(engine.gameState);
     }
 
-    // Atualiza HUD apenas se houver mudanças significativas ou a cada X frames
-    // Como React 18 é otimizado, vamos tentar atualizar se os valores mudarem
+    // Throttling: Atualiza HUD apenas a cada 10 frames (aprox 6x por segundo)
+    // Isso reduz drasticamente a carga na thread principal do React
+    frameCountRef.current++;
+    if (frameCountRef.current % 10 !== 0 && engine.gameState === 'playing') {
+        return;
+    }
+
+    // Atualiza HUD apenas se houver mudanças significativas
     if (
       engine.score !== hudState.score ||
       engine.player.xp !== hudState.xp ||
       engine.player.level !== hudState.level ||
-      engine.player.hp !== hudState.hp ||
+      Math.abs(engine.player.hp - hudState.hp) > 1 || // Só atualiza se HP mudar > 1
       (engine.boss && engine.boss.hp !== hudState.boss?.hp) ||
       (!engine.boss && hudState.boss)
     ) {

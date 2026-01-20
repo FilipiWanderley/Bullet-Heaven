@@ -18,26 +18,46 @@ export interface SpatialObject {
  * Em vez de comparar todos contra todos (O(N^2)), dividimos o espaço em "baldes" (células).
  * Apenas entidades no mesmo balde (e vizinhos) são testadas.
  * Isso reduz drasticamente as verificações de colisão em cenários com muitas entidades.
+ * 
+ * OTIMIZAÇÃO V2:
+ * - Chaves numéricas (bitwise) para evitar alocação de Strings.
+ * - Reuso de Arrays para evitar Garbage Collection (GC).
  */
 export class SpatialHashGrid {
   private cellSize: number;
-  private grid: Map<string, SpatialObject[]>;
+  private grid: Map<number, SpatialObject[]>;
+  private activeKeys: number[]; // Rastreia chaves usadas no frame atual
 
   constructor(cellSize: number) {
     this.cellSize = cellSize;
-    // width e height removidos pois a implementação agora é infinita (Map)
     this.grid = new Map();
+    this.activeKeys = [];
   }
 
   /**
    * Limpa a grade para reconstrução a cada frame.
+   * OTIMIZADO: Não deleta os arrays, apenas zera o length.
    */
   clear() {
-    this.grid.clear();
+    for (let i = 0; i < this.activeKeys.length; i++) {
+        const key = this.activeKeys[i];
+        const cell = this.grid.get(key);
+        if (cell) {
+            cell.length = 0; // Limpeza rápida sem desalocar memória
+        }
+    }
+    this.activeKeys.length = 0;
   }
 
-  private getKey(x: number, y: number): string {
-    return `${x},${y}`;
+  /**
+   * Gera uma chave numérica única para a célula.
+   * Usa bitwise packing para performance.
+   * Suporta coordenadas de célula entre -32768 e +32767.
+   */
+  private getKey(x: number, y: number): number {
+    // (x & 0xFFFF) pega os 16 bits inferiores
+    // << 16 move y para os 16 bits superiores
+    return ((x & 0xFFFF) | ((y & 0xFFFF) << 16));
   }
 
   /**
@@ -49,10 +69,18 @@ export class SpatialHashGrid {
     const cellY = Math.floor(obj.position.y / this.cellSize);
     const key = this.getKey(cellX, cellY);
 
-    if (!this.grid.has(key)) {
-      this.grid.set(key, []);
+    let cell = this.grid.get(key);
+    if (!cell) {
+      cell = [];
+      this.grid.set(key, cell);
     }
-    this.grid.get(key)!.push(obj);
+
+    // Se a célula estava vazia (limpa), marcamos como ativa neste frame
+    if (cell.length === 0) {
+        this.activeKeys.push(key);
+    }
+    
+    cell.push(obj);
   }
 
   /**
@@ -71,7 +99,8 @@ export class SpatialHashGrid {
         const key = this.getKey(cellX + i, cellY + j);
         const cellObjects = this.grid.get(key);
         
-        if (cellObjects) {
+        if (cellObjects && cellObjects.length > 0) {
+          // Push manual pode ser mais rápido que concat em loops quentes
           for (let k = 0; k < cellObjects.length; k++) {
             candidates.push(cellObjects[k]);
           }
