@@ -35,14 +35,31 @@ export class BackgroundSystem {
   private nebulas: Nebula[] = [];
   private meteors: Meteor[] = [];
   private meteorTimer: number = 0;
+  
+  private backgroundImage: HTMLImageElement | null = null;
+  private bgLoaded: boolean = false;
 
   constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
     this.init();
+    
+    // Carrega imagem de fundo de alta qualidade
+    // Fallback: Se falhar, usa o sistema procedural
+    this.backgroundImage = new Image();
+    this.backgroundImage.src = 'https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2072&q=80';
+    this.backgroundImage.onload = () => {
+        this.bgLoaded = true;
+        console.log('Background Image Loaded');
+    };
+    this.backgroundImage.onerror = () => {
+        console.warn('Failed to load background image, using procedural generation');
+        this.bgLoaded = false;
+    };
   }
 
   resize(width: number, height: number) {
+    if (width <= 0 || height <= 0) return;
     this.width = width;
     this.height = height;
     this.init();
@@ -75,11 +92,11 @@ export class BackgroundSystem {
 
     // 2. Generate Stars (3 Layers of depth)
     // Layer 1: Far, small, slow, numerous
-    this.createStars(150, 0.5, 1.5, 0.1, 0.3);
+    this.createStars(150, 1.0, 2.0, 0.1, 0.3);
     // Layer 2: Mid, medium, medium speed
-    this.createStars(80, 1.5, 2.5, 0.3, 0.5);
+    this.createStars(80, 2.0, 3.0, 0.3, 0.5);
     // Layer 3: Near, large, fast (rare)
-    this.createStars(20, 2.5, 3.5, 0.6, 0.8);
+    this.createStars(20, 3.0, 4.5, 0.6, 0.8);
   }
 
   private createStars(count: number, minSize: number, maxSize: number, minParallax: number, maxParallax: number) {
@@ -148,43 +165,92 @@ export class BackgroundSystem {
   }
 
   draw(ctx: CanvasRenderingContext2D, camera: Vector2) {
-    // 1. Clear Background (Deep Space Black)
-    ctx.fillStyle = '#050505';
+    if (this.width <= 0 || this.height <= 0) return;
+
+    // 1. Clear Background
+    ctx.fillStyle = '#020210'; 
     ctx.fillRect(0, 0, this.width, this.height);
 
     ctx.save();
 
-    // 2. Draw Nebulas (Furthest)
+    // 1.5 Draw Background Image (if loaded)
+    if (this.bgLoaded && this.backgroundImage) {
+        const bgW = this.backgroundImage.width;
+        const bgH = this.backgroundImage.height;
+        
+        // Simple parallax tiling
+        const scale = Math.max(this.width / bgW, this.height / bgH) * 1.2;
+        const scaledW = bgW * scale;
+        const scaledH = bgH * scale;
+
+        // Move slower than camera (0.1 parallax)
+        const x = (-(camera.x * 0.1) % scaledW);
+        const y = (-(camera.y * 0.1) % scaledH);
+
+        // Draw 4 tiles to cover movement
+        ctx.globalAlpha = 0.4; // Darken it a bit so gameplay is visible
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                ctx.drawImage(this.backgroundImage, x + i * scaledW, y + j * scaledH, scaledW, scaledH);
+            }
+        }
+        ctx.globalAlpha = 1.0;
+    } else {
+        // Fallback: Procedural Nebulas
+        this.drawProceduralNebulas(ctx, camera);
+    }
+
+    // 2. Draw Stars (Middle to Near) - Always draw stars on top for depth
+    this.drawStars(ctx, camera);
+    
+    // 3. Draw Meteors (Front)
+    this.drawMeteors(ctx);
+
+    ctx.restore();
+  }
+
+  private drawProceduralNebulas(ctx: CanvasRenderingContext2D, camera: Vector2) {
     this.nebulas.forEach(n => {
       // Calculate parallax position with wrapping
       let x = (n.x - camera.x * n.parallax) % this.width;
       let y = (n.y - camera.y * n.parallax) % this.height;
-      if (x < -n.radius) x += this.width;
-      if (y < -n.radius) y += this.height;
       
-      // Since nebulas are large, we might need to draw them multiple times if they cross edges
-      // Simple approach: Draw once, if it looks poppy we can improve later.
-      // Better approach for seamless wrapping: Draw 4 times if near edge? 
-      // For now, simple modulo wrapping is fine for a background layer.
-      
-      // Correction for negative modulo in JS
+      // Handle negative modulo wrapping
       if (x < 0) x += this.width;
       if (y < 0) y += this.height;
 
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, n.radius);
-      gradient.addColorStop(0, n.colorStart);
-      gradient.addColorStop(1, n.colorEnd);
+      // Draw 4 times to ensure seamless wrapping for large objects
+      const positions = [
+          { dx: 0, dy: 0 },
+          { dx: this.width, dy: 0 },
+          { dx: -this.width, dy: 0 },
+          { dx: 0, dy: this.height },
+          { dx: 0, dy: -this.height }
+      ];
 
-      ctx.fillStyle = gradient;
-      ctx.globalCompositeOperation = 'screen'; // Blend mode for glowing effect
-      ctx.beginPath();
-      ctx.arc(x, y, n.radius, 0, Math.PI * 2);
-      ctx.fill();
+      positions.forEach(pos => {
+          const drawX = x + pos.dx;
+          const drawY = y + pos.dy;
+          
+          // Optimization: only draw if visible
+          if (drawX + n.radius < 0 || drawX - n.radius > this.width || 
+              drawY + n.radius < 0 || drawY - n.radius > this.height) return;
+
+          const gradient = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, n.radius);
+          gradient.addColorStop(0, n.colorStart);
+          gradient.addColorStop(1, n.colorEnd);
+
+          ctx.fillStyle = gradient;
+          ctx.globalCompositeOperation = 'screen'; 
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, n.radius, 0, Math.PI * 2);
+          ctx.fill();
+      });
     });
-
     ctx.globalCompositeOperation = 'source-over';
+  }
 
-    // 3. Draw Stars (Middle to Near)
+  private drawStars(ctx: CanvasRenderingContext2D, camera: Vector2) {
     const now = Date.now();
     this.stars.forEach(s => {
       let x = (s.x - camera.x * s.parallax) % this.width;
@@ -198,7 +264,8 @@ export class BackgroundSystem {
       const alpha = s.baseAlpha + twinkle * 0.3;
 
       ctx.fillStyle = s.color;
-      ctx.globalAlpha = Math.max(0.1, Math.min(1, alpha));
+      // Boost alpha for visibility
+      ctx.globalAlpha = Math.max(0.3, Math.min(1, alpha));
       
       // Neon Glow for larger stars
       if (s.size > 2.0) {
@@ -212,11 +279,11 @@ export class BackgroundSystem {
       ctx.arc(x, y, s.size, 0, Math.PI * 2);
       ctx.fill();
     });
-    
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1.0;
+  }
 
-    // 4. Draw Meteors (Front)
+  private drawMeteors(ctx: CanvasRenderingContext2D) {
     this.meteors.forEach(m => {
       ctx.strokeStyle = m.color;
       ctx.lineWidth = 2;
@@ -243,7 +310,5 @@ export class BackgroundSystem {
       );
       ctx.stroke();
     });
-
-    ctx.restore();
   }
 }

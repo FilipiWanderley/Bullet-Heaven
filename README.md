@@ -123,6 +123,8 @@ Foco total em eliminar travamentos ("stutter") e garantir 60 FPS estáveis mesmo
 Uma atualização focada em imersão atmosférica e mobilidade extrema para o jogador.
 
 ### 🌌 Imersão Visual (Background System)
+- **Hybrid Background System**: Sistema inteligente que carrega texturas de alta definição (Unsplash) para o fundo.
+  - **Procedural Fallback**: Se a conexão falhar ou a imagem não carregar, o sistema muda automaticamente para renderização procedural de nebulosas, garantindo que o jogo nunca fique com fundo preto.
 - **Parallax Scrolling**: Implementação de um fundo estelar com 3 camadas de profundidade que se movem em velocidades diferentes, criando uma sensação real de 3D.
 - **Nebulosas Procedurais**: Nuvens de gás neon (Magenta, Ciano, Roxo) geradas dinamicamente.
 - **Meteoros Dinâmicos**: Eventos aleatórios de meteoros cruzando o horizonte.
